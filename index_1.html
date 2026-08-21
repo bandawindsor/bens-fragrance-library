@@ -1,0 +1,1546 @@
+<title>Scent Ledger</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+<style>
+  /* ---------- tokens ---------- */
+  :root{
+    --bg:#f6f6f3;
+    --surface:#ffffff;
+    --surface-2:#eeeee9;
+    --ink:#17181a;
+    --ink-muted:#5c5f5c;
+    --ink-faint:#8b8e8a;
+    --line:#e1e0da;
+    --line-strong:#c9c8c1;
+    --accent:#146356;
+    --accent-strong:#0d4b41;
+    --accent-ink:#f4faf8;
+    --accent-soft:#e4efec;
+    --radius:3px;
+    --shadow-1:0 1px 2px rgba(20,30,26,0.06);
+    --shadow-2:0 10px 30px -12px rgba(20,30,26,0.28);
+    --font-display:'Newsreader', Georgia, 'Times New Roman', serif;
+    --font-body:'Instrument Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-mono:'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    --hue-accent:167;
+    --maxw:1320px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#121412;
+      --surface:#191c1a;
+      --surface-2:#212420;
+      --ink:#f0f1ec;
+      --ink-muted:#a5a89f;
+      --ink-faint:#787b74;
+      --line:#2b2e29;
+      --line-strong:#3a3d37;
+      --accent:#4bb99a;
+      --accent-strong:#6ecfb0;
+      --accent-ink:#08211b;
+      --accent-soft:#1c2b25;
+      --shadow-1:0 1px 2px rgba(0,0,0,0.4);
+      --shadow-2:0 14px 34px -12px rgba(0,0,0,0.6);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#121412;
+    --surface:#191c1a;
+    --surface-2:#212420;
+    --ink:#f0f1ec;
+    --ink-muted:#a5a89f;
+    --ink-faint:#787b74;
+    --line:#2b2e29;
+    --line-strong:#3a3d37;
+    --accent:#4bb99a;
+    --accent-strong:#6ecfb0;
+    --accent-ink:#08211b;
+    --accent-soft:#1c2b25;
+    --shadow-1:0 1px 2px rgba(0,0,0,0.4);
+    --shadow-2:0 14px 34px -12px rgba(0,0,0,0.6);
+  }
+
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--font-body);
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  img,svg{display:block;max-width:100%;}
+  a{color:inherit;text-decoration:none;}
+  button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;}
+  select,input{font:inherit;color:inherit;}
+  ::selection{background:var(--accent-soft);color:var(--accent-strong);}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 clamp(1.1rem,3vw,2.5rem);}
+
+  h1,h2,h3{font-family:var(--font-display);font-weight:500;margin:0;text-wrap:balance;}
+  .eyebrow{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);}
+  .num{font-family:var(--font-mono);font-variant-numeric:tabular-nums;}
+
+  /* ---------- skip link ---------- */
+  .skip-link{position:absolute;left:-999px;top:0;background:var(--accent);color:var(--accent-ink);padding:.6rem 1rem;z-index:200;}
+  .skip-link:focus{left:1rem;top:1rem;}
+
+  /* ---------- topbar ---------- */
+  .topbar{position:sticky;top:0;z-index:50;background:color-mix(in srgb, var(--bg) 88%, transparent);backdrop-filter:blur(10px) saturate(140%);-webkit-backdrop-filter:blur(10px) saturate(140%);border-bottom:1px solid var(--line);}
+  .topbar-inner{display:flex;align-items:center;gap:1.6rem;height:64px;}
+  .brand{font-family:var(--font-display);font-size:1.18rem;font-weight:500;letter-spacing:.01em;white-space:nowrap;}
+  .brand em{font-style:italic;color:var(--accent);}
+  .nav{display:flex;align-items:center;gap:.15rem;flex:1;min-width:0;}
+  .nav a{font-size:.86rem;color:var(--ink-muted);padding:.5rem .65rem;border-radius:var(--radius);white-space:nowrap;transition:color .15s ease, background .15s ease;}
+  .nav a:hover{color:var(--ink);background:var(--surface-2);}
+  .nav a.active{color:var(--ink);font-weight:600;}
+  .topbar-tools{display:flex;align-items:center;gap:.4rem;margin-left:auto;}
+  .icon-btn{display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:var(--radius);color:var(--ink-muted);}
+  .icon-btn:hover{background:var(--surface-2);color:var(--ink);}
+  .icon-btn.active{background:var(--accent-soft);color:var(--accent-strong);}
+  .hamburger{display:none;}
+  .mobile-nav{display:none;}
+
+  @media (max-width:860px){
+    .nav{display:none;}
+    .hamburger{display:flex;}
+    .mobile-nav.open{display:flex;}
+    .mobile-nav{position:fixed;inset:64px 0 0 0;background:var(--bg);z-index:49;flex-direction:column;padding:1rem clamp(1.1rem,3vw,2.5rem);gap:.1rem;overflow:auto;}
+    .mobile-nav a{padding:.85rem .2rem;border-bottom:1px solid var(--line);font-size:1rem;}
+  }
+
+  /* ---------- buttons ---------- */
+  .btn{display:inline-flex;align-items:center;gap:.5rem;padding:.72rem 1.15rem;border-radius:var(--radius);font-size:.88rem;font-weight:600;white-space:nowrap;transition:transform .12s ease, background .15s ease, border-color .15s ease;}
+  .btn:active{transform:translateY(1px) scale(.98);}
+  .btn-primary{background:var(--accent);color:var(--accent-ink);}
+  .btn-primary:hover{background:var(--accent-strong);}
+  .btn-ghost{border:1px solid var(--line-strong);color:var(--ink);}
+  .btn-ghost:hover{background:var(--surface-2);}
+  .btn-sm{padding:.5rem .8rem;font-size:.8rem;}
+
+  /* ---------- hero ---------- */
+  .hero{padding:clamp(2.4rem,6vw,4.2rem) 0 clamp(2.6rem,5vw,3.6rem);}
+  .hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(2rem,5vw,4rem);align-items:center;}
+  .hero-kicker{display:inline-flex;align-items:baseline;gap:.4rem;font-family:var(--font-mono);font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:.9rem;}
+  .hero-kicker .hero-count{font-size:1.05rem;font-weight:600;color:var(--accent);letter-spacing:0;text-transform:none;}
+  .hero h1{font-size:clamp(2.3rem,4.6vw,3.6rem);line-height:1.06;letter-spacing:-.01em;}
+  .hero h1 i{font-style:italic;color:var(--accent);}
+  .hero p{margin:1.15rem 0 1.7rem;max-width:46ch;color:var(--ink-muted);font-size:1.03rem;}
+  .hero-cta{display:flex;gap:.7rem;flex-wrap:wrap;}
+  .aura{position:relative;aspect-ratio:1/1;border-radius:50%;overflow:hidden;isolation:isolate;box-shadow:var(--shadow-2);}
+  .aura-field{position:absolute;inset:0;background:
+    radial-gradient(circle at 28% 24%, color-mix(in srgb, var(--accent) 55%, transparent), transparent 42%),
+    radial-gradient(circle at 74% 66%, color-mix(in srgb, var(--accent) 35%, transparent), transparent 46%),
+    radial-gradient(circle at 50% 92%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 50%),
+    linear-gradient(160deg, var(--surface-2), var(--surface));
+  }
+  .aura-grain{position:absolute;inset:0;opacity:.06;background-image:repeating-linear-gradient(115deg, var(--ink) 0 1px, transparent 1px 3px);mix-blend-mode:multiply;}
+  .aura-tags{position:absolute;inset:0;}
+  .aura-tag{position:absolute;font-family:var(--font-mono);font-size:.68rem;letter-spacing:.04em;padding:.32rem .55rem;border-radius:var(--radius);background:color-mix(in srgb, var(--surface) 78%, transparent);border:1px solid var(--line);color:var(--ink-muted);backdrop-filter:blur(3px);}
+  @media (max-width:860px){
+    .hero-grid{grid-template-columns:1fr;}
+    .aura{max-width:340px;margin:0 auto;}
+  }
+
+  /* ---------- stat strip ---------- */
+  .stat-strip{border-top:1px solid var(--line);border-bottom:1px solid var(--line);}
+  .stat-strip .wrap{display:grid;grid-template-columns:repeat(4,1fr);}
+  .stat-cell{padding:1.7rem 1rem;border-left:1px solid var(--line);}
+  .stat-cell:first-child{border-left:0;}
+  .stat-cell .num{display:block;font-size:clamp(1.5rem,3vw,2.1rem);color:var(--ink);}
+  .stat-cell .label{font-size:.78rem;color:var(--ink-muted);margin-top:.2rem;}
+  @media (max-width:700px){
+    .stat-strip .wrap{grid-template-columns:repeat(2,1fr);}
+    .stat-cell:nth-child(3){border-left:0;}
+    .stat-cell{border-top:1px solid var(--line);}
+    .stat-cell:nth-child(1),.stat-cell:nth-child(2){border-top:0;}
+  }
+
+  section{padding:clamp(2.4rem,5vw,3.6rem) 0;}
+  .section-head{margin-bottom:1.6rem;}
+  .section-head h2{font-size:clamp(1.5rem,2.6vw,2rem);}
+  .section-head p{color:var(--ink-muted);margin:.5rem 0 0;max-width:60ch;}
+
+  /* ---------- family bento ---------- */
+  .fam-grid{display:grid;grid-template-columns:repeat(6,1fr);grid-auto-rows:120px;gap:.9rem;}
+  .fam-tile{grid-column:span 2;position:relative;border-radius:var(--radius);overflow:hidden;padding:1rem;display:flex;flex-direction:column;justify-content:flex-end;color:var(--accent-ink);isolation:isolate;}
+  .fam-tile:nth-child(1),.fam-tile:nth-child(4){grid-row:span 2;grid-column:span 3;}
+  .fam-tile .fam-name{font-family:var(--font-display);font-size:1.15rem;font-style:italic;}
+  .fam-tile .fam-count{font-family:var(--font-mono);font-size:.72rem;opacity:.85;margin-top:.15rem;}
+  @media (max-width:860px){
+    .fam-grid{grid-template-columns:repeat(2,1fr);grid-auto-rows:110px;}
+    .fam-tile{grid-column:span 1 !important;grid-row:span 1 !important;}
+  }
+
+  /* ---------- cta band ---------- */
+  .cta-band{background:var(--ink);color:var(--bg);border-radius:var(--radius);}
+  :root[data-theme="dark"] .cta-band, @media (prefers-color-scheme:dark){ }
+  .cta-band-inner{padding:clamp(2rem,5vw,3.2rem);display:flex;align-items:center;justify-content:space-between;gap:1.5rem;flex-wrap:wrap;}
+  .cta-band h2{color:inherit;font-size:clamp(1.4rem,2.6vw,1.9rem);}
+  .cta-band .btn-primary{background:var(--accent);color:var(--accent-ink);}
+
+  /* ---------- filter bar ---------- */
+  .filter-bar{position:sticky;top:64px;z-index:30;background:color-mix(in srgb, var(--bg) 92%, transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding:.9rem 0;}
+  .filter-row{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;}
+  .search-field{display:flex;align-items:center;gap:.5rem;border:1px solid var(--line-strong);border-radius:var(--radius);padding:.5rem .7rem;background:var(--surface);flex:1;min-width:180px;max-width:340px;}
+  .search-field input{border:0;background:none;outline:0;width:100%;font-size:.88rem;}
+  .search-field svg{flex-shrink:0;color:var(--ink-faint);}
+  select.chip-select{border:1px solid var(--line-strong);border-radius:var(--radius);padding:.5rem .6rem;background:var(--surface);font-size:.83rem;color:var(--ink);}
+  .result-count{margin-left:auto;font-family:var(--font-mono);font-size:.78rem;color:var(--ink-muted);}
+  .active-chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem;}
+  .active-chips:empty{margin-top:0;}
+  .chip{display:inline-flex;align-items:center;gap:.35rem;font-size:.76rem;padding:.28rem .55rem;border-radius:var(--radius);background:var(--accent-soft);color:var(--accent-strong);}
+  .chip button{display:flex;}
+
+  /* ---------- catalogue grid ---------- */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:1.1rem;padding:2rem 0 3rem;}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;transition:transform .18s ease, box-shadow .18s ease;display:flex;flex-direction:column;}
+  .card:hover{transform:translateY(-3px);box-shadow:var(--shadow-2);}
+  .swatch{aspect-ratio:16/10;position:relative;isolation:isolate;}
+  .swatch-fill{position:absolute;inset:0;background:
+      radial-gradient(circle at 30% 20%, color-mix(in srgb, var(--accent) 60%, transparent), transparent 55%),
+      radial-gradient(circle at 78% 82%, color-mix(in srgb, var(--accent) 32%, transparent), transparent 60%),
+      linear-gradient(155deg, var(--surface-2), var(--surface));}
+  .swatch-fam{position:absolute;left:.7rem;bottom:.6rem;font-family:var(--font-mono);font-size:.64rem;letter-spacing:.05em;text-transform:uppercase;color:var(--accent-ink);background:color-mix(in srgb, var(--ink) 55%, transparent);padding:.22rem .45rem;border-radius:var(--radius);}
+  .card-body{padding:1rem 1.05rem 1.1rem;display:flex;flex-direction:column;gap:.5rem;flex:1;}
+  .card-body .brand-line{font-size:.74rem;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;}
+  .card-body h3{font-size:1.12rem;}
+  .card-notes{font-size:.82rem;color:var(--ink-muted);}
+  .card-tags{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.15rem;}
+  .tag{font-size:.7rem;padding:.2rem .5rem;border-radius:var(--radius);border:1px solid var(--line);color:var(--ink-muted);}
+  .card-foot{margin-top:auto;display:flex;align-items:center;justify-content:space-between;padding-top:.6rem;}
+  .card-foot .btn{padding:.4rem .75rem;}
+
+  .empty{padding:3.5rem 1rem;text-align:center;color:var(--ink-muted);}
+  .empty h3{color:var(--ink);margin-bottom:.4rem;}
+
+  /* ---------- drawer ---------- */
+  .scrim{position:fixed;inset:0;background:rgba(10,14,12,.4);opacity:0;pointer-events:none;transition:opacity .2s ease;z-index:98;}
+  .scrim.open{opacity:1;pointer-events:auto;}
+  .drawer{position:fixed;top:0;right:0;height:100%;width:min(460px,100%);background:var(--surface);border-left:1px solid var(--line);transform:translateX(100%);transition:transform .28s cubic-bezier(.16,1,.3,1);z-index:99;overflow-y:auto;}
+  .drawer.open{transform:translateX(0);}
+  .drawer-head{position:sticky;top:0;background:var(--surface);border-bottom:1px solid var(--line);padding:1.1rem 1.3rem;display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;}
+  .drawer-body{padding:1.3rem;}
+  .drawer-body h3{font-size:1.6rem;margin-bottom:.15rem;}
+  .pyramid{display:grid;gap:.9rem;margin:1.2rem 0;}
+  .pyramid-tier .eyebrow{margin-bottom:.35rem;}
+  .pyramid-notes{display:flex;flex-wrap:wrap;gap:.4rem;}
+  .meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:.9rem;margin:1.2rem 0;padding:1rem 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);}
+  .meta-item .eyebrow{margin-bottom:.25rem;}
+  .meta-item div{font-size:.88rem;}
+  .layer-list{display:flex;flex-direction:column;gap:.4rem;margin-top:.4rem;}
+  .layer-row{display:flex;align-items:center;gap:.5rem;font-size:.85rem;padding:.4rem .6rem;border-radius:var(--radius);background:var(--surface-2);}
+  .layer-row.restrict{color:#a24444;}
+  :root[data-theme="dark"] .layer-row.restrict, .layer-row.restrict{background:color-mix(in srgb, #a24444 12%, var(--surface-2));}
+
+  /* ---------- brand / index ---------- */
+  .brand-accordion{display:flex;flex-direction:column;border-top:1px solid var(--line);}
+  .brand-accordion details{border-bottom:1px solid var(--line);}
+  .brand-accordion summary{list-style:none;display:flex;align-items:center;justify-content:space-between;padding:1rem .2rem;cursor:pointer;font-family:var(--font-display);font-size:1.15rem;}
+  .brand-accordion summary::-webkit-details-marker{display:none;}
+  .brand-accordion summary .count{font-family:var(--font-mono);font-size:.76rem;color:var(--ink-muted);font-style:normal;}
+  .brand-accordion summary svg{transition:transform .2s ease;color:var(--ink-faint);}
+  .brand-accordion details[open] summary svg{transform:rotate(180deg);}
+  .brand-items{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:.8rem;padding:0 .2rem 1.3rem;}
+  .mini-card{border:1px solid var(--line);border-radius:var(--radius);padding:.75rem .85rem;}
+  .mini-card .n{font-size:.94rem;}
+  .mini-card .f{font-size:.76rem;color:var(--ink-muted);margin-top:.15rem;}
+
+  .az-nav{position:sticky;top:64px;background:var(--bg);z-index:20;display:flex;flex-wrap:wrap;gap:.15rem;padding:.9rem 0;border-bottom:1px solid var(--line);}
+  .az-nav a{font-family:var(--font-mono);font-size:.78rem;width:26px;height:26px;display:flex;align-items:center;justify-content:center;color:var(--ink-muted);border-radius:var(--radius);}
+  .az-nav a:hover, .az-nav a.has{color:var(--ink);background:var(--surface-2);}
+  .az-nav a.dim{color:var(--ink-faint);opacity:.35;pointer-events:none;}
+  .az-group{padding-top:1.6rem;}
+  .az-group .letter{font-family:var(--font-display);font-size:2.2rem;font-style:italic;color:var(--accent);margin-bottom:.7rem;}
+  .az-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:.5rem .8rem;border-top:1px solid var(--line);}
+  .az-row{display:flex;justify-content:space-between;gap:.6rem;padding:.55rem .1rem;border-bottom:1px solid var(--line);font-size:.9rem;}
+  .az-row .b{color:var(--ink-faint);font-size:.78rem;}
+
+  /* ---------- explore ---------- */
+  .tab-row{display:flex;gap:.3rem;border-bottom:1px solid var(--line);margin-bottom:1.4rem;flex-wrap:wrap;}
+  .tab-btn{padding:.7rem 1rem;font-size:.88rem;color:var(--ink-muted);border-bottom:2px solid transparent;margin-bottom:-1px;}
+  .tab-btn.active{color:var(--ink);border-color:var(--accent);font-weight:600;}
+  .tag-cloud{display:flex;flex-wrap:wrap;gap:.55rem;margin-bottom:1.8rem;}
+  .tag-pill{font-size:.84rem;padding:.5rem .9rem;border-radius:999px;border:1px solid var(--line-strong);color:var(--ink-muted);display:flex;align-items:center;gap:.4rem;text-transform:capitalize;}
+  .tag-pill .num{font-size:.72rem;color:var(--ink-faint);}
+  .tag-pill:hover{border-color:var(--accent);color:var(--ink);}
+  .tag-pill.active{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);}
+  .tag-pill.active .num{color:var(--accent-ink);opacity:.8;}
+
+  /* ---------- stats ---------- */
+  .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:2.4rem;}
+  @media (max-width:860px){.stats-grid{grid-template-columns:1fr;}}
+  .bar-block h3{font-size:1.05rem;margin-bottom:1rem;}
+  .bar-row{display:grid;grid-template-columns:120px 1fr 42px;align-items:center;gap:.7rem;margin-bottom:.55rem;}
+  .bar-row .lbl{font-size:.8rem;color:var(--ink-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .bar-track{height:8px;background:var(--surface-2);border-radius:2px;overflow:hidden;}
+  .bar-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .5s cubic-bezier(.16,1,.3,1);}
+  .bar-row .v{font-size:.78rem;text-align:right;color:var(--ink-faint);}
+
+  /* ---------- layering ---------- */
+  .pull-quote{font-family:var(--font-display);font-style:italic;font-size:clamp(1.4rem,2.6vw,1.9rem);line-height:1.25;max-width:26ch;color:var(--ink);margin:0 0 1.8rem;padding-bottom:.15rem;}
+  .playbook{max-width:70ch;color:var(--ink-muted);}
+  .playbook p{margin:0 0 1rem;}
+  .calc-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:1.6rem;margin-top:2rem;}
+  .calc-row{display:grid;grid-template-columns:1fr auto 1fr;gap:1rem;align-items:center;}
+  .field label{display:block;font-size:.78rem;color:var(--ink-faint);margin-bottom:.4rem;}
+  .field select{width:100%;padding:.65rem .7rem;border:1px solid var(--line-strong);border-radius:var(--radius);background:var(--surface);}
+  .calc-plus{color:var(--ink-faint);}
+  @media (max-width:700px){.calc-row{grid-template-columns:1fr;}.calc-plus{justify-self:center;}}
+
+  /* ---------- admin ---------- */
+  .admin-lock{max-width:360px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:1.6rem;}
+  .admin-lock .field{margin-bottom:1rem;}
+  .admin-lock input{width:100%;padding:.65rem .7rem;border:1px solid var(--line-strong);border-radius:var(--radius);background:var(--surface);}
+  .admin-error{color:#a24444;font-size:.82rem;margin:.8rem 0 0;}
+  .admin-flash{display:flex;align-items:center;gap:.5rem;background:var(--accent-soft);color:var(--accent-strong);padding:.8rem 1rem;border-radius:var(--radius);font-size:.86rem;margin-bottom:1.4rem;}
+  .admin-actions{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;margin-bottom:1.6rem;}
+  .admin-status{font-family:var(--font-mono);font-size:.76rem;color:var(--ink-faint);}
+  .admin-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:1.6rem;align-items:start;}
+  @media (max-width:900px){.admin-grid{grid-template-columns:1fr;}}
+  .admin-panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:1.5rem;}
+  .admin-panel h3{font-size:1.1rem;margin-bottom:1.1rem;}
+  .admin-panel .field{margin-bottom:.9rem;}
+  .admin-panel .field label{display:block;font-size:.78rem;color:var(--ink-faint);margin-bottom:.35rem;}
+  .admin-panel input[type="text"], .admin-panel input[type="password"], .admin-panel select, .admin-panel textarea{
+    width:100%;padding:.6rem .7rem;border:1px solid var(--line-strong);border-radius:var(--radius);background:var(--surface);font-size:.88rem;resize:vertical;
+  }
+  .field-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.8rem;}
+  @media (max-width:560px){.field-row{grid-template-columns:1fr;}}
+  .check-group{margin-bottom:1rem;}
+  .check-group > label{display:block;font-size:.78rem;color:var(--ink-faint);margin-bottom:.5rem;}
+  .check-row{display:flex;flex-wrap:wrap;gap:.5rem;}
+  .check-pill{display:flex;align-items:center;gap:.4rem;font-size:.8rem;padding:.4rem .7rem;border:1px solid var(--line-strong);border-radius:999px;cursor:pointer;color:var(--ink-muted);}
+  .check-pill input{accent-color:var(--accent);}
+  .form-error{color:#a24444;font-size:.82rem;margin-bottom:.9rem;}
+  .admin-list{max-height:520px;overflow:auto;border-top:1px solid var(--line);margin-top:.9rem;}
+  .admin-row{display:flex;align-items:center;justify-content:space-between;gap:.8rem;padding:.75rem .1rem;border-bottom:1px solid var(--line);}
+  .admin-row strong{display:block;font-size:.92rem;}
+  .admin-row-brand{font-size:.76rem;color:var(--ink-faint);}
+  .calc-result{margin-top:1.4rem;padding:1rem 1.1rem;border-radius:var(--radius);font-size:.9rem;display:flex;gap:.6rem;align-items:flex-start;}
+  .calc-result.partner{background:var(--accent-soft);color:var(--accent-strong);}
+  .calc-result.restrict{background:color-mix(in srgb, #a24444 14%, transparent);color:#a24444;}
+  .calc-result.neutral{background:var(--surface-2);color:var(--ink-muted);}
+
+  /* ---------- layering analysis ---------- */
+  .analysis{margin-top:1.6rem;}
+  .analysis-verdict{display:flex;gap:.8rem;align-items:flex-start;padding:1.1rem 1.2rem;border-radius:var(--radius);}
+  .analysis-verdict .av-icon{flex-shrink:0;margin-top:.15rem;}
+  .analysis-verdict.partner{background:var(--accent-soft);color:var(--accent-strong);}
+  .analysis-verdict.restrict{background:color-mix(in srgb, #a24444 14%, transparent);color:#a24444;}
+  .analysis-verdict.neutral{background:var(--surface-2);color:var(--ink-muted);}
+  .av-label{font-family:var(--font-display);font-size:1.2rem;font-style:italic;margin-bottom:.3rem;}
+  .av-reason{margin:0;font-size:.9rem;line-height:1.55;color:inherit;opacity:.92;}
+  .analysis-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.3rem;margin-top:1.3rem;}
+  .ai-block p{margin:.5rem 0 0;font-size:.86rem;color:var(--ink-muted);line-height:1.55;}
+  .ai-block strong{color:var(--ink);font-weight:600;}
+  .ai-pills{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.5rem;}
+  @media (max-width:860px){.analysis-grid{grid-template-columns:1fr;}}
+
+  /* ---------- footer ---------- */
+  .footer{border-top:1px solid var(--line);padding:2.2rem 0;color:var(--ink-faint);font-size:.82rem;display:flex;justify-content:space-between;flex-wrap:wrap;gap:.6rem;}
+
+  /* ================= HERO BAND (deliberate dark block, fixed palette) ================= */
+  .band-dark{
+    --bd-bg:#0c0e0c; --bd-bg-2:#141712; --bd-ink:#f4f5f1; --bd-ink-muted:#a6aaa1;
+    --bd-line:rgba(255,255,255,.14); --bd-accent:#4bb99a; --bd-accent-ink:#08211b;
+    background:radial-gradient(120% 90% at 82% 0%, var(--bd-bg-2), var(--bd-bg) 60%);
+    color:var(--bd-ink);
+    position:relative; overflow:hidden;
+    isolation:isolate;
+  }
+  .band-dark::after{content:"";position:absolute;inset:0;pointer-events:none;opacity:.5;
+    background-image:radial-gradient(1px 1px at 12% 22%, rgba(255,255,255,.22) 0, transparent 60%),
+      radial-gradient(1px 1px at 68% 62%, rgba(255,255,255,.16) 0, transparent 60%),
+      radial-gradient(1px 1px at 40% 82%, rgba(255,255,255,.14) 0, transparent 60%),
+      radial-gradient(1px 1px at 88% 30%, rgba(255,255,255,.18) 0, transparent 60%);
+  }
+  .band-dark .eyebrow{color:var(--bd-ink-muted);}
+  .band-dark .hero p{color:var(--bd-ink-muted);}
+  .band-dark .hero-kicker{color:var(--bd-ink-muted);}
+  .band-dark .hero-kicker .hero-count{color:var(--bd-accent);}
+  .band-dark .btn-ghost{border-color:var(--bd-line);color:var(--bd-ink);}
+  .band-dark .btn-ghost:hover{background:rgba(255,255,255,.06);}
+  .band-dark .btn-primary{background:var(--bd-accent);color:var(--bd-accent-ink);}
+  .band-dark .btn-primary:hover{background:#63cbae;}
+  .band-dark .hero h1 i{color:var(--bd-accent);}
+  .band-dark .aura-tag{background:rgba(20,24,20,.55);border-color:var(--bd-line);color:var(--bd-ink-muted);}
+  .band-dark .aura-field{background:
+      radial-gradient(circle at 28% 24%, color-mix(in srgb, var(--bd-accent) 60%, transparent), transparent 42%),
+      radial-gradient(circle at 74% 66%, color-mix(in srgb, var(--bd-accent) 38%, transparent), transparent 46%),
+      radial-gradient(circle at 50% 92%, color-mix(in srgb, var(--bd-accent) 22%, transparent), transparent 50%),
+      linear-gradient(160deg, var(--bd-bg-2), var(--bd-bg));
+  }
+  .band-dark .aura-grain{opacity:.1;mix-blend-mode:overlay;}
+
+  /* ---------- kinetic hero type ---------- */
+  .hero h1{position:relative;z-index:1;}
+  .hero h1 .word{display:inline-block;overflow:hidden;vertical-align:top;}
+  .hero h1 .word span{display:inline-block;transform:translateY(115%);animation:wordUp .8s cubic-bezier(.16,1,.3,1) forwards;}
+  .hero h1 .word:nth-child(1) span{animation-delay:.02s;}
+  .hero h1 .word:nth-child(2) span{animation-delay:.09s;}
+  .hero h1 .word:nth-child(3) span{animation-delay:.16s;}
+  .hero h1 .word:nth-child(4) span{animation-delay:.23s;}
+  .hero h1 .word:nth-child(5) span{animation-delay:.30s;}
+  @keyframes wordUp{to{transform:translateY(0);}}
+
+  /* ---------- ticker / marquee (max one per page) ---------- */
+  .ticker{border-top:1px solid var(--bd-line);overflow:hidden;position:relative;z-index:1;}
+  .ticker-track{display:flex;width:max-content;gap:3rem;padding:.9rem 0;animation:tickerScroll 32s linear infinite;}
+  .ticker-track span{font-family:var(--font-mono);font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;color:var(--bd-ink-muted);white-space:nowrap;display:flex;align-items:center;gap:.6rem;}
+  .ticker-track span i{width:4px;height:4px;border-radius:50%;background:var(--bd-accent);display:inline-block;}
+  @keyframes tickerScroll{from{transform:translateX(0);}to{transform:translateX(-50%);}}
+  .ticker:hover .ticker-track{animation-play-state:paused;}
+
+  /* ---------- magnetic buttons ---------- */
+  [data-magnetic]{transition:transform .25s cubic-bezier(.16,1,.3,1);will-change:transform;}
+
+  /* ---------- tilt + spotlight cards ---------- */
+  [data-tilt]{transform:perspective(900px) rotateX(var(--rx,0)) rotateY(var(--ry,0)) translateZ(0);transition:transform .35s cubic-bezier(.16,1,.3,1), box-shadow .35s ease;will-change:transform;}
+  [data-tilt]:hover{box-shadow:var(--shadow-2);}
+  [data-tilt]{position:relative;}
+  [data-tilt]::before{content:"";position:absolute;inset:-1px;border-radius:inherit;padding:1px;pointer-events:none;opacity:0;transition:opacity .3s ease;
+    background:radial-gradient(220px circle at var(--mx,50%) var(--my,50%), color-mix(in srgb, var(--accent) 70%, transparent), transparent 60%);
+    -webkit-mask:linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite:xor; mask-composite:exclude; z-index:2;
+  }
+  [data-tilt]:hover::before{opacity:1;}
+
+  /* ---------- card monogram watermark ---------- */
+  .card{position:relative;}
+  .card-mono{position:absolute;right:.4rem;bottom:-.35rem;font-family:var(--font-display);font-style:italic;font-size:4.4rem;line-height:1;color:var(--ink);opacity:.05;pointer-events:none;z-index:1;user-select:none;}
+
+  /* ---------- nav underline ---------- */
+  .nav a{position:relative;}
+  .nav a::after{content:"";position:absolute;left:.65rem;right:.65rem;bottom:.28rem;height:1.5px;background:var(--accent);transform:scaleX(0);transform-origin:left;transition:transform .25s cubic-bezier(.16,1,.3,1);}
+  .nav a:hover::after{transform:scaleX(1);}
+  .nav a.active::after{transform:scaleX(1);}
+
+  /* ---------- reveal-on-scroll ---------- */
+  .reveal-io{opacity:0;transform:translateY(18px);transition:opacity .7s cubic-bezier(.16,1,.3,1), transform .7s cubic-bezier(.16,1,.3,1);transition-delay:calc(var(--d,0) * 55ms);}
+  .reveal-io.in-view{opacity:1;transform:translateY(0);}
+
+  /* ---------- animated bar fill ---------- */
+  .bar-fill{width:0 !important;}
+  .bar-fill.in-view{width:var(--w,0%) !important;}
+
+  /* ---------- pop-in (calculator result etc) ---------- */
+  .pop-in{animation:popIn .45s cubic-bezier(.34,1.56,.64,1) both;}
+  @keyframes popIn{0%{opacity:0;transform:scale(.92) translateY(4px);}100%{opacity:1;transform:scale(1) translateY(0);}}
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important;}
+    .ticker-track{animation:none;}
+    [data-tilt]{transform:none !important;}
+  }
+
+  .reveal{opacity:0;transform:translateY(14px);animation:reveal .6s cubic-bezier(.16,1,.3,1) forwards;}
+  .reveal.d1{animation-delay:.05s;} .reveal.d2{animation-delay:.12s;} .reveal.d3{animation-delay:.19s;}
+  @keyframes reveal{to{opacity:1;transform:translateY(0);}}
+</style>
+
+<div class="app">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a href="#/home" class="brand">Scent<em>&nbsp;Ledger</em></a>
+      <nav class="nav" aria-label="Primary">
+        <a href="#/catalogue" data-route="catalogue">Catalogue</a>
+        <a href="#/brand" data-route="brand">Brand</a>
+        <a href="#/index" data-route="index">Index</a>
+        <a href="#/explore" data-route="explore">Explore</a>
+        <a href="#/stats" data-route="stats">Statistics</a>
+        <a href="#/layering" data-route="layering">Layering</a>
+      </nav>
+      <div class="topbar-tools">
+        <a class="icon-btn" id="adminBtn" href="#/admin" aria-label="Admin">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="1.5"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+        </a>
+        <button class="icon-btn hamburger" id="hamburgerBtn" aria-label="Menu">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+  <nav class="mobile-nav" id="mobileNav" aria-label="Mobile">
+    <a href="#/catalogue">Catalogue</a>
+    <a href="#/brand">By Brand</a>
+    <a href="#/index">A to Z Index</a>
+    <a href="#/explore">Explore</a>
+    <a href="#/stats">Statistics</a>
+    <a href="#/layering">Layering</a>
+    <a href="#/admin">Admin</a>
+  </nav>
+
+  <main id="main"></main>
+
+  <footer class="footer">
+    <span>Scent Ledger, a private fragrance index.</span>
+    <span id="footCount"></span>
+  </footer>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-hidden="true"></aside>
+
+<script>
+/* ============ ICONS ============ */
+const ICONS = {
+  search: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.2" y2="16.2"/></svg>',
+  close: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><line x1="5" y1="5" x2="19" y2="19"/><line x1="19" y1="5" x2="5" y2="19"/></svg>',
+  chevron: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>',
+  check: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+  x: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="5" x2="19" y2="19"/><line x1="19" y1="5" x2="5" y2="19"/></svg>',
+  arrow: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="13 6 19 12 13 18"/></svg>'
+};
+
+/* ============ DATA (with persisted admin overrides) ============ */
+const BASE_DATA = [{"id": 1, "name": "Prestige", "brand": "Aoera", "olfactoryFamily": "Aromatic Fougère", "topNotes": ["Lemon", "Juniper Berry", "Cardamom", "Basil"], "middleNotes": ["White Flowers", "Nutmeg", "Floral Notes", "Anise"], "baseNotes": ["Patchouli", "Musk", "Incense", "Cedarwood"], "season": ["Fall", "Winter"], "timeOfDay": ["Evening"], "occasion": ["Formal", "Date"], "projection": "Moderate", "longevity": "6-8h", "mood": ["Sophisticated", "Mysterious"], "personalNotes": "", "rating": 0, "layeringPartners": ["Bjorka - Folks", "Aoera - Royale", "Aoera - Sweet Coconut"], "layeringRestrictions": ["Lab Art Aromatique - Asvara", "Saka - Treasure", "Layr - Get Naked"]}, {"id": 2, "name": "Royale", "brand": "Aoera", "olfactoryFamily": "Fruity Floral", "topNotes": ["Cassis", "Passion Fruit", "Peach", "Pear", "Raspberry"], "middleNotes": ["Muguet", "Heliotrope"], "baseNotes": ["Sandalwood", "Vanilla", "Musk", "Patchouli", "Amberwood"], "season": ["Spring", "Summer"], "timeOfDay": ["Afternoon", "Evening"], "occasion": ["Date", "Casual"], "projection": "Moderate", "longevity": "6-8h", "mood": ["Romantic", "Happy"], "personalNotes": "", "rating": 0, "layeringPartners": ["Layr - Kyoto Jazz", "Crusita - Gentlemen", "Aoera - Prestige"], "layeringRestrictions": []}, {"id": 3, "name": "Sweet Coconut", "brand": "Aoera", "olfactoryFamily": "Tropical Floral", "topNotes": ["Bergamot", "Cassis", "Coconut"], "middleNotes": ["Jasmine", "Orris", "Rose"], "baseNotes": ["Cedarwood", "Musk", "Vanilla"], "season": ["Summer"], "timeOfDay": ["Afternoon"], "occasion": ["Casual", "Outdoor"], "projection": "Moderate", "longevity": "4-6h", "mood": ["Happy", "Relaxed"], "personalNotes": "", "rating": 0, "layeringPartners": ["Aoera - Prestige", "Crusita - Gentlemen", "Layr - Kyoto Jazz"], "layeringRestrictions": []}, {"id": 4, "name": "Nigredo", "brand": "Altar", "olfactoryFamily": "Oriental", "topNotes": ["Coke Accord", "Black Cherry", "Bergamot", "Black Pepper"], "middleNotes": ["Cognac", "Ginger", "Jasmine"], "baseNotes": ["Vanilla", "Benzoin", "Indonesian Patchouli"], "season": ["Fall", "Winter"], "timeOfDay": ["Evening", "Night"], "occasion": ["Night Out", "Date"], "projection": "Strong", "longevity": "8-10h", "mood": ["Mysterious", "Sophisticated"], "personalNotes": "", "rating": 0, "layeringPartners": ["Bohe - Midas", "Crusita - Gentlemen", "Layr - Osmanthus"], "layeringRestrictions": ["Farbash - Toba", "Maison Amare Studio - Coral Drift", "Mykonos - California Blue"]}, {"id": 5, "name": "Sophisticated", "brand": "Amthra", "olfactoryFamily": "Floral Oriental", "topNotes": ["Aldehydes", "Orange", "Cypress", "Pink Peppercorn"], "middleNotes": ["Orange Flower", "White Floral Notes"], "baseNotes": ["Patchouli", "Incense", "Ambergris"], "season": ["Fall", "Winter"], "timeOfDay": ["Evening"], "occasion": ["Formal", "Date"], "projection": "Moderate", "longevity": "6-8h", "mood": ["Sophisticated", "Mysterious"], "personalNotes": "", "rating": 0, "layeringPartners": ["Bohe - Midas", "Bohe - Noir", "Crusita - Gentlemen"], "layeringRestrictions": ["Farbash - Toba", "Maison Amare Studio - Coral Drift", "Mykonos - California Blue"]}, {"id": 6, "name": "November Rain", "brand": "Amthra", "olfactoryFamily": "Green Chypre", "topNotes": ["Green Notes", "Bergamot", "Pink Pepper"], "middleNotes": ["Rain Accord", "Watery Notes", "Rose", "Jasmine"], "baseNotes": ["Pine Tree", "Moss", "Patchouli"], "season": ["Fall"], "timeOfDay": ["Morning", "Afternoon"], "occasion": ["Casual", "Outdoor"], "projection": "Moderate", "longevity": "4-6h", "mood": ["Relaxed", "Mysterious"], "personalNotes": "", "rating": 0, "layeringPartners": ["Layr - Kyoto Jazz", "Aoera - Royale", "Bjorka - 7 AM"], "layeringRestrictions": ["Lab Art Aromatique - Asvara", "Saka - Treasure", "Layr - Get Naked"]}, {"id": 7, "name": "7 AM", "brand": "Bjorka", "olfactoryFamily": "Fresh Floral", "topNotes": ["Jasmine Sambac", "Geranium", "Lavender"], "middleNotes": ["Citrus Accord", "White Florals"], "baseNotes": ["Sandalwood", "Patchouli", "Musk"], "season": ["Spring", "Summer"], "timeOfDay": ["Morning"], "occasion": ["Office", "Casual"], "projection": "Moderate", "longevity": "4-6h", "mood": ["Energetic", "Happy"], "personalNotes": "", "rating": 0, "layeringPartners": ["Layr - Kyoto Jazz", "Aoera - Prestige", "Crusita - Gentlemen"], "layeringRestrictions": []}, {"id": 8, "name": "Folks", "brand": "Bjorka", "olfactoryFamily": "Aromatic Floral", "topNotes": ["Bergamot", "Cologne Accord", "Lavender"], "middleNotes": ["Orange Blossom", "Jasmine", "Tuberose", "Sandalwood"], "baseNotes": ["Cedarwood", "Vanilla Bean", "Patchouli", "Musk"], "season": ["Spring", "Summer", "Fall"], "timeOfDay": ["Morning", "Afternoon"], "occasion": ["Office", "Casual"], "projection": "Moderate", "longevity": "6-8h", "mood": ["Relaxed", "Sophisticated"], "personalNotes": "", "rating": 0, "layeringPartners": ["Aoera - Prestige", "Layr - Kyoto Jazz", "Saka - Greendaze"], "layeringRestrictions": ["Scent of Pluto - Lost in Italian Sea"]}, {"id": 9, "name": "Noir", "brand": "Bohe", "olfactoryFamily": "Floral Gourmand", "topNotes": ["Vanilla", "Angelica"], "middleNotes": ["Pear", "Jasmine"], "baseNotes": ["Cedarwood"], "season": ["Fall", "Winter"], "timeOfDay": ["Evening"], "occasion": ["Date", "Casual"], "projection": "Intimate", "longevity": "4-6h", "mood": ["Romantic", "Cozy"], "personalNotes": "", "rating": 0, "layeringPartners": ["Velixir - Icarus", "Altar - Nigredo", "Amthra - Sophisticated"], "layeringRestrictions": ["Farbash - Toba", "Maison Amare Studio - Coral Drift", "Mykonos - California Blue"]}, {"id": 10, "name": "Midas", "brand": "Bohe", "olfactoryFamily": "Gourmand Oriental", "topNotes": ["Apple", "Lavender", "Bergamot", "Sweet Orange"], "middleNotes": ["Geranium", "Violet", "Jasmine", "Cocoa"], "baseNotes": ["Vanilla", "Cardamom", "Sandalwood", "Pepper", "Patchouli", "Coffee"], "season": ["Fall", "Winter"], "timeOfDay": ["Evening"], "occasion": ["Date", "Casual"], "projection": "Moderate", "longevity": "6-8h", "mood": ["Cozy", "Romantic"], "personalNotes": "", "rating": 0, "layeringPartners": ["Crusita - Gentlemen", "Hint - Metaverse", "Layr - Chronic Tonic"], "layeringRestrictions": ["Farbash - Toba", "Maison Amare Studio - Coral Drift", "Mykonos - California Blue"]}, {"id": 12, "name": "Soleil", "brand": "Bohe", "olfactoryFamily": "Fruity Fresh", "topNotes": ["Watermelon", "Strawberry", "Kiwi"], "middleNotes": ["Peony", "Rose", "Citrus Notes"], "baseNotes": ["Tea Accord", "Ambroxan", "Neroli"], "season": ["Summer"], "timeOfDay": ["Morning", "Afternoon"], "occasion": ["Outdoor", "Casual"], "projection": "Moderate", "longevity": "4-6h", "mood": ["Happy", "Energetic"], "personalNotes": "", "rating": 0, "layeringPartners": ["Compounded By - Akira", "Saka - After Bath", "Velixir - Morpheus"], "layeringRestrictions": ["Lab Art Aromatique - Asvara", "Layr - Get Naked", "Saka - Treasure"]}, {"id": 13, "name": "Summer Fling", "brand": "Botanical Essential", "olfactoryFamily": "Aromatic Fougère", "topNotes": ["Bergamot", "Lime"], "middleNotes": ["Clary Sage", "Spices"], "baseNotes": ["Oak Moss", "French Vetiver", "Amber", "Musk"], "season": ["Spring", "Summer"], "timeOfDay": ["Morning", "Afternoon"], "occasion": ["Office", "Outdoor", "Casual"], "projection": "Moderate", "longevity": "6-8h", "mood": ["Energetic", "Relaxed"], "personalNotes": "", "rating": 0, "layeringPartners": ["Hint - Cotton", "Lab Art Aromatique - Kabut Pagi", "Layr - Kyoto Jazz"], "layeringRestrictions": ["Lab Art Aromatique - Asvara", "Saka - Treasure", "Layr - Get Naked"]}, {"id": 14, "name": "In The Clouds", "brand": "Botanical Essential", "olfactoryFamily": "Soft Powdery", "topNotes": ["Bergamot", "Elemi", "Freesia"], "middleNotes": ["Cedarwood", "Orris", "Almond"], "baseNotes": ["Vanilla", "Tonka Bean", "Musk"], "season": ["Spring", "Fall"], "timeOfDay": ["Afternoon", "Evening"], "occasion": ["Casual", "Date"], "projection": "Intimate", "longevity": "4-6h", "mood": ["Relaxed", "Romantic"], "personalNotes": "", "rating": 0, "layeringPartners": ["Aoera - Royale", "Bjorka - 7 AM", "Bjorka - Folks"], "layeringRestrictions": []}, {"id": 15, "name": "Omotesando", "brand": "Citizen of The World", "olfactoryFamily": "Floral", "topNotes": ["Pear", "Red Berries", "Rose"], "middleNotes": ["Jasmine", "Heliotrope", "Ylang-Ylang"], "baseNotes": ["Musk", "Amberwood", "Oak"], "season": ["Spring", "Summer"], "timeOfDay": ["Afternoon", "Evening"], "occasion": ["Date", "Formal"], "projection": "Moderate", "longevity": "6-8h", "mood": ["Romantic", "Sophisticated"], "personalNotes": "", "rating": 0, "layeringPartners": ["Aoera - Prestige", "Bohe - Sage", "Botanical Essential - Summer Fling"], "layeringRestrictions": []}, {"id": 16, "name": "Akira", "brand": "Compounded By", "olfactoryFamily": "Aromatic Tea", "topNotes": ["Cardamom", "Orange"], "middleNotes": ["Green Tea", "Ginger", "Neroli"], "baseNotes": ["Vetiver", "Iris", "Ambroxan", "Olibanum"], "season": ["Spring", "Fall"], "timeOfDay": ["Morning", "Afternoon"], "occasion": ["Office", "Casual"], "projection": "Moderate", "longevity": "6-8h", "mood": ["Relaxed", "Sophisticated"], "personalNotes": "", "rating": 0, "layeringPartners": ["Bohe - Soleil", "Crusita - Busy Day", "Mars on Earth - 808"], "layeringRestrictions": []}, {"id": 17, "name": "Busy Day", "brand": "Crusita", "olfactoryFamily": "Aromatic Fresh", "topNotes": ["Bergamot", "Blackcurrant", "Mandarin"], "middleNotes": ["Lavender", "Geranium", "Powdery Accord"], "baseNotes": ["Patchouli", "Vetiver", "Tonka Bean"], "season": ["Spring", "Summer", "Fall"], "timeOfDay": ["Morning", "Afternoon"], "occasion": ["Office", "Casual"], "projection": "Moderate", "longevity": "6-8h", "mood": ["Energetic", "Sophisticated"], "personalNotes": "", "rating": 0, "layeringPartners": ["Velixir - Helios", "Aoera - Royale", "Bjorka - 7 AM"], "layeringRestrictions": ["Lab Art Aromatique - Asvara", "Saka - Treasure", "Layr - Get Naked"]}, {"id": 18, "name": "Gentlemen", "brand": "Crusita", "olfactoryFamily": "Woody Fresh", "topNotes": ["Grapefruit", "Blood Mandarin", "Green Apple"], "middleNotes": ["Cedarwood", "Nutmeg", "Water Lily"], "baseNotes": ["Sandalwood", "Vanilla", "Musk"], "season": ["Spring", "Summer"], "timeOfDay": ["Morning", "Afternoon"], "occasion": ["Office", "Casual"], "projection": "Moderate", "longevity": "6-8h", "mood": ["Relaxed", "Sophisticated"], "personalNotes": "", "rating": 0, "layeringPartners": ["Aoera - Royale", "Hint - Cotton", "Layr - Kyoto Jazz"], "layeringRestrictions": []}, {"id": 19, "name": "Auralis", "brand": "D/C/UM", "olfactoryFamily": "Aromatic", "topNotes": ["Juniper Berries", "Ginger"], "middleNotes": ["Lavender", "Mint"], "baseNotes": ["Vanilla", "Tonka Beans"], "season": ["Spring", "Summer"], "timeOfDay": ["Morning"], "occasion": ["Casual"], "projection": "Moderate", "longevity": "4-6h", "mood": ["Energetic", "Relaxed"], "personalNotes": "", "rating": 0, "layeringPartners": ["Aoera - Royale", "Aoera - Sweet Coconut", "Hint - Cotton"], "layeringRestrictions": ["Lab Art Aromatique - Asvara", "Layr - Get Naked", "Saka - Treasure"]}, {"id": 20, "name": "Warm Morning", "brand": "Deepi", "olfactoryFamily": "Floral Tea", "topNotes": ["Tea", "Pear Blossom", "Cardamom", "Mandarin Orange", "Petitgrain", "Galbanum", "Hyacinth", "Neroli", "Bergamot"], "middleNotes": ["Ylang-Ylang", "Sambac Jasmine", "Jasmine", "Mugane", "Green Tea", "Black Tea", "Rose", "Lily-of-the-Valley", "Orris"], "baseNotes": ["Musk", "Moss", "Maderal Accord", "Ambrette", "Iris Vetiver", "Vetiver", "Sandalwood", "Leather"], "season": ["Spring", "Fall"], "timeOfDay": ["Morning", "Afternoon"], "occasion": ["Office", "Formal", "Date"], "projection": "Moderate", "longevity": "8-10h", "mood": ["Sophisticated", "Relaxed"], "personalNotes": "", "rating": 0, "layeringPartners": ["Aoera - Royale", "Bjorka - 7 AM", "Crusita - Gentlemen"], "layeringRestrictions": []}, {"id": 21, "name": "Jade Serenity", "brand": "Earth Love Life", "olfactoryFamily": "Green Tea Floral", "topNotes": ["Bergamot", "Violet Leaf", "Peppermint Oil"], "middleNotes": ["Mimosa Absolute", "Oolong Tea", "Bulgarian Rose"], "baseNotes": ["Sulawesi Patchouli", "Cedarwood", "Ambrostar"], "season": ["Spring", "Summer"], "timeOfDay": ["Morning", "Afternoon"], "occasion": ["Office", "Casual"], "projection": "Moderate", "longevity": "6-8h", "mood": ["Relaxed", "Happy"], "personalNotes": "", "rating": 0, "layeringPartners": ["Aoera - Prestige", "Aoera - Sweet Coconut", "Bjorka - Folks"], "layeringRestrictions": []}, {"id": 22, "name": "Toba", "brand": "Farbash", "olfactoryFamily": "Aquatic", "topNotes": ["Lime", "Lake Accord"], "middleNotes": ["Freesia", "Jasmine", "Lily-of-the-Valley"], "baseNotes": ["Cypress", "Guaiac Wood", "Cedar"], "season": ["Summer", "Spring"], "timeOfDay": ["Morning", "Afternoon"], "occasion": ["Outdoor", "Casual"], "projection": "Moderate", "longevity": "4-6h", "mood": ["Relaxed", "Happy"], "personalNotes": "", "rating": 0, "layeringPartners": ["Nostalgy - Echoes of Aqua", "Aoera - Prestige", "Amthra - November Rain"], "layeringRestrictions": ["Lab Art Aromatique - Asvara", "Saka - Treasure", "Layr - Get Naked"]}, {"id": 23, "name": "Shelby", "brand": "Fordive", "olfactoryFamily": "Aromatic Woody", "topNotes": ["Sage", "Grapefruit", "Quince"], "middleNotes": ["Lily of the Valley", "Iris", "Sandalwood"], "baseNotes": ["Amber", "Sandalwood", "Pine"], "season": ["Spring", "Fall"], "timeOfDay": ["Afternoon"], "occasion": ["Casual", "Outdoor"], "projection": "Moderate", "longevity": "6-8h", "mood": ["Relaxed"], "personalNotes": "", "rating": 0, "layeringPartners": ["Hint - Cotton", "Lab Art Aromatique - Kabut Pagi", "Layr - Kyoto Jazz"], "layeringRestrictions": []}, {"id": 24, "name": "Jeans", "brand": "Hint", "olfactoryFamily": "Fresh Spicy", "topNotes": ["Mandarin", "Pink Peppercorn", "Rose"], "middleNotes": ["Cedarwood", "Patchouli"], "baseNotes": ["Musk", "Vanilla"], "season": ["Spring", "Fall"], "timeOfDay": ["Morning", "Afternoon"], "occasion": ["Casual"], "projection": "Moderate", "longevity": "4-6h", "mood": ["Relaxed"], "personalNotes": "", "rating": 0, "layeringPartners": ["Crusita - Gentlemen", "Bohe - Midas", "Lab Art Aromatique - Kala Hujan"], "layeringRestrictions": ["Farbash - Toba", "Maison Amare Studio - Coral Drift", "Mykonos - California Blue"]}, {"id": 25, "name": "Metaverse", "brand": "Hint", "olfactoryFamily": "Floral Oriental", "topNotes": ["Ginger", "Aldehydes", "Red Fruits"], "middleNotes": ["Jasmine", "Orange Blossom", "Tuberose"], "baseNotes": ["Patchouli", "Incense", "Vanilla", "Honey", "Vetiver"], "season": ["Fall", "Winter"], "timeOfDay": ["Evening", "Night"], "occasion": ["Night Out", "Date"], "projection": "Strong", "longevity": "8-10h", "mood": ["Mysterious", "Romantic"], "personalNotes": "", "rating": 0, "layeringPartners": ["Bohe - Midas", "Crusita - Gentlemen", "Aoera - Royale"], "layeringRestrictions": ["Farbash - Toba", "Maison Amare Studio - Coral Drift", "Mykonos - California Blue"]}, {"id": 26, "name": "Epitome", "brand": "Hint", "olfactoryFamily": "Spicy Green", "topNotes": ["Bergamot", "Cardamom", "Pepper", "Mint"], "middleNotes": ["Fig", "Coconut Milk", "Basil"], "baseNotes": ["Atlas Cedarwood", "Patchouli", "Ambery Notes"], "season": ["Fall", "Spring"], "timeOfDay": ["Afternoon", "Evening"], "occasion": ["Casual", "Date"], "projection": "Moderate", "longevity": "6-8h", "mood": ["Mysterious", "Sophisticated"], "personalNotes": "", "rating": 0, "layeringPartners": ["Bohe - Midas", "Bohe - Noir", "Crusita - Gentlemen"], "layeringRestrictions": ["Farbash - Toba", "Maison Amare Studio - Coral Drift", "Mykonos - California Blue"]}, {"id": 27, "name": "Cotton", "brand": "Hint", "olfactoryFamily": "Soft Floral", "topNotes": ["Bergamot", "Aldehydes", "Ozone", "Freesia", "Verbena"], "middleNotes": ["Peony", "Muguet", "Gardenia", "Orris", "Rose"], "baseNotes": ["Musk", "Vanilla", "Sandalwood", "Cedarwood", "Amber"], "season": ["Spring", "Summer"], "timeOfDay": ["Morning", "Afternoon"], "occasion": ["Office", "Casual"], "projection": "Intimate", "longevity": "4-6h", "mood": ["Relaxed", "Happy"], "personalNotes": "", "rating": 0, "layeringPartners": ["Layr - Kyoto Jazz", "Crusita - Gentlemen", "Aoera - Prestige"], "layeringRestrictions": []}, {"id": 28, "name": "Aquaterrae", "brand": "Khaf", "olfactoryFamily": "Aromatic Fresh", "topNotes": ["Grapefruit", "Pink Pepper", "Betahydrane"], "middleNotes": ["Geranium", "Mugane", "Sage", "Lavender"], "baseNotes": ["Lorenox", "Amber", "Incense"], "season": ["Spring", "Summer"], "timeOfDay": ["Morning", "Afternoon"], "occasion": ["Office", "Outdoor", "Casual"], "projection": "Moderate", "longevity": "6-8h", "mood": ["Energetic", "Relaxed"], "personalNotes": "", "rating": 0, "layeringPartners": ["Hint - Cotton", "Lab Art Aromatique - Kabut Pagi", "Layr - Kyoto Jazz"], "layeringRestrictions": ["Lab Art Aromatique - Asvara", "Saka - Treasure", "Layr - Get Naked"]}, {"id": 29, "name": "Silverwood", "brand": "Khaf", "olfactoryFamily": "Spicy Woody", "topNotes": ["Aquaflora", "Timur Pepper"], "middleNotes": ["Muguet", "Violet"], "baseNotes": ["Cypriol Oil", "Cashmere Wood", "Vetiver Oil"], "season": ["Fall"], "timeOfDay": ["Afternoon", "Evening"], "occasion": ["Office", "Casual"], "projection": "Moderate", "longevity": "6-8h", "mood": ["Sophisticated"], "personalNotes": "", "rating": 0, "layeringPartners": ["Scent of Pluto - Hugged in Cashmere", "Bohe - Noir", "Bohe - Midas"], "layeringRestrictions": ["Farbash - Toba", "Maison Amare Studio - Coral Drift", "Mykonos - California Blue"]}, {"id": 30, "name": "Mandira", "brand": "Lab Art Aromatique", "olfactoryFamily": "Spicy Aromatic", "topNotes": ["Bergamot", "Mandarin Orange", "Lemon", "Red Pepper", "Cassia", "Blackberry"], "middleNotes": ["Lavender", "Violet Leaf", "Woody Notes", "Agarwood", "Amber"], "baseNotes": ["Coriander", "Cardamom", "Jasmine", "Blackcurrant", "Rose Oil", "Orange"], "season": ["Fall"], "timeOfDay": ["Afternoon", "Evening"], "occasion": ["Formal", "Date"], "projection": "Moderate", "longevity": "6-8h", "mood": ["Sophisticated", "Mysterious"], "personalNotes": "", "rating": 0, "layeringPartners": ["Bohe - Midas", "Bohe - Noir", "Crusita - Gentlemen"], "layeringRestrictions": ["Farbash - Toba", "Maison Amare Studio - Coral Drift", "Mykonos - California Blue"]}, {"id": 31, "name": "Asvara", "brand": "Lab Art Aromatique", "olfactoryFamily": "Oud Oriental", "topNotes": ["Agarwood", "Brazilian Rosewood", "Cardamom", "Bergamot", "Incense"], "middleNotes": ["Sichuan Pepper", "Vanilla", "Vetiver", "Agarwood", "Oud"], "baseNotes": ["Tonka Bean", "Amber"], "season": ["Fall", "Winter"], "timeOfDay": ["Evening", "Night"], "occasion": ["Formal", "Date"], "projection": "Strong", "longevity": "10h+", "mood": ["Sophisticated", "Mysterious"], "personalNotes": "", "rating": 0, "layeringPartners": ["Layr - Alexandra", "Nostalgy - Winter in Rovaniemi", "Fordive - Shelby"], "layeringRestrictions": ["Farbash - Toba", "Maison Amare Studio - Coral Drift", "Mykonos - California Blue"]}, {"id": 32, "name": "Nivara", "brand": "Lab Art Aromatique", "olfactoryFamily": "Floral Gourmand", "topNotes": ["Truffle", "Gardenia", "Black Currant"], "middleNotes": ["Ylang-Ylang", "Jasmine", "Verbena", "Orchid"], "baseNotes": ["Bergamot", "Mandarin Orange", "Amalfi Lemon"], "season": ["Fall"], "timeOfDay": ["Evening"], "occasion": ["Date", "Formal"], "projection": "Moderate", "longevity": "6-8h", "mood": ["Sophisticated", "Mysterious"], "personalNotes": "", "rating": 0, "layeringPartners": ["Altar - Nigredo", "Amthra - Sophisticated", "Botanical Essential - In The Clouds"], "layeringRestrictions": ["Farbash - Toba", "Maison Amare Studio - Coral Drift", "Mykonos - California Blue"]}, {"id": 33, "name": "Kabut Pagi", "brand": "Lab Art Aromatique", "olfactoryFamily": "Fresh Floral", "topNotes": ["Mandarin Orange", "Green Notes", "Bergamot", "Pear"], "middleNotes": ["Grapefruit", "Amalfi Lemon", "Freesia", "Rose"], "baseNotes": ["Violet", "Musk", "Sandalwood", "Amber"], "season": ["Spring"], "timeOfDay": ["Morning"], "occasion": ["Office", "Casual"], "projection": "Moderate", "longevity": "4-6h", "mood": ["Happy", "Energetic"], "personalNotes": "", "rating": 0, "layeringPartners": ["Botanical Essential - Summer Fling", "Crusita - Gentlemen", "Deepi - Warm Morning"], "layeringRestrictions": []}, {"id": 34, "name": "Kala Hujan", "brand": "Lab Art Aromatique", "olfactoryFamily": "Aromatic Woody", "topNotes": ["Gin", "Vetiver", "Patchouli"], "middleNotes": ["Pineapple", "Cardamom", "Virginia Cedar"], "baseNotes": ["Tonka Beans", "Musk", "Amber"], "season": ["Fall"], "timeOfDay": ["Afternoon", "Evening"], "occasion": ["Casual", "Office"], "projection": "Moderate", "longevity": "6-8h", "mood": ["Relaxed", "Mysterious"], "personalNotes": "", "rating": 0, "layeringPartners": ["Hint - Cotton", "Lab Art Aromatique - Kabut Pagi", "Layr - Alexandra"], "layeringRestrictions": []}, {"id": 35, "name": "Kilau Senja", "brand": "Lab Art Aromatique", "olfactoryFamily": "Warm Spicy", "topNotes": ["Mint", "Green Apple", "Tonka Beans", "Ambroxan"], "middleNotes": ["Marigold", "Cinnamon", "Bergamot"], "baseNotes": ["Cedar", "Incense", "Madagascar Vanilla", "Sandalwood"], "season": ["Fall", "Winter"], "timeOfDay": ["Evening"], "occasion": ["Date", "Casual"], "projection": "Moderate", "longevity": "8-10h", "mood": ["Romantic", "Cozy"], "personalNotes": "", "rating": 0, "layeringPartners": ["Bohe - Midas", "Crusita - Gentlemen", "Fordive - Shelby"], "layeringRestrictions": ["Maison Amare Studio - Coral Drift", "Mykonos - California Blue", "Saka - Etherwave"]}, {"id": 36, "name": "Chronic Tonic", "brand": "Layr", "olfactoryFamily": "Spicy Floral", "topNotes": ["Cinnamon", "Grapefruit", "Raspberry", "Cypress", "Thyme", "Rosemary"], "middleNotes": ["Lactone", "Iris", "Muguet", "Rose", "Saffron", "Violet", "Floral Notes", "Mandarin Orange"], "baseNotes": ["Musk", "Moss", "Vanilla Amber", "Patchouli", "Vetiver", "Leather", "Sandalwood", "Olibanum"], "season": ["Fall", "Spring"], "timeOfDay": ["Afternoon", "Evening"], "occasion": ["Office", "Formal"], "projection": "Moderate", "longevity": "8-10h", "mood": ["Sophisticated"], "personalNotes": "", "rating": 0, "layeringPartners": ["Layr - Get Naked", "Bohe - Midas", "Crusita - Gentlemen"], "layeringRestrictions": ["Farbash - Toba", "Maison Amare Studio - Coral Drift", "Saka - Etherwave"]}, {"id": 37, "name": "Alexandra", "brand": "Layr", "olfactoryFamily": "Floral Oriental", "topNotes": ["Bergamot", "Saffron", "Clove", "Glazed Fruit"], "middleNotes": ["Rose", "Caramel", "Heliotrope", "Frankincense"], "baseNotes": ["Tonka Bean", "Amber", "Musk", "Moss"], "season": ["Fall", "Winter"], "timeOfDay": ["Evening"], "occasion": ["Date", "Night Out"], "projection": "Moderate", "longevity": "6-8h", "mood": ["Romantic", "Sophisticated"], "personalNotes": "", "rating": 0, "layeringPartners": ["Lab Art Aromatique - Kala Hujan", "Layr - Osmanthus", "Mykonos - Monaco Royale"], "layeringRestrictions": ["Farbash - Toba", "Maison Amare Studio - Coral Drift", "Saka - Etherwave"]}, {"id": 38, "name": "Kyoto Jazz", "brand": "Layr", "olfactoryFamily": "Aromatic Tea", "topNotes": ["Matcha", "Green Notes", "Yuzu", "Pear", "Bergamot", "Cocoa", "Cardamom", "Lavandin", "Ozone"], "middleNotes": ["Ylang-Ylang", "Violet", "Beeswax", "Orange Blossom", "Lily of the Valley", "Cassis", "Pineapple"], "baseNotes": ["Musk", "Sandalwood", "Amber", "Iris", "Cashmere", "Vanilla", "Patchouli", "Moss", "Labdanum"], "season": ["Spring", "Fall"], "timeOfDay": ["Afternoon", "Evening"], "occasion": ["Office", "Casual", "Date"], "projection": "Moderate", "longevity": "8-10h", "mood": ["Sophisticated", "Relaxed"], "personalNotes": "", "rating": 0, "layeringPartners": ["Aoera - Royale", "Hint - Cotton", "Bjorka - 7 AM"], "layeringRestrictions": []}, {"id": 39, "name": "Get Naked", "brand": "Layr", "olfactoryFamily": "Tobacco Aromatic", "topNotes": ["Tobacco", "Green Pear", "Violet", "Orange", "Petitgrain", "Galbanum", "Pine"], "middleNotes": ["Magnolia", "Sandalwood", "Rose", "Pineapple", "Lavender", "Geranium", "Freesia"], "baseNotes": ["Amber", "Cedar", "Musk", "Patchouli", "Leather", "Moss", "Tonka"], "season": ["Fall", "Winter"], "timeOfDay": ["Evening"], "occasion": ["Date", "Night Out"], "projection": "Moderate", "longevity": "8-10h", "mood": ["Sophisticated", "Mysterious"], "personalNotes": "", "rating": 0, "layeringPartners": ["Layr - Chronic Tonic", "Layr - Alexandra", "Layr - Osmanthus"], "layeringRestrictions": ["Maison Amare Studio - Coral Drift", "Saka - Etherwave", "Velixir - Helios"]}, {"id": 40, "name": "Osmanthus", "brand": "Layr", "olfactoryFamily": "Floral Woody", "topNotes": ["Ginger", "Violet", "Pear"], "middleNotes": ["Osmanthus", "Rose", "Geranium", "Lily of the Valley"], "baseNotes": ["Indonesian Patchouli", "Amber", "Frankincense", "Leather", "Musk"], "season": ["Spring", "Fall"], "timeOfDay": ["Afternoon", "Evening"], "occasion": ["Date", "Casual"], "projection": "Moderate", "longevity": "6-8h", "mood": ["Romantic"], "personalNotes": "", "rating": 0, "layeringPartners": ["Deepi - Warm Morning", "Hint - Cotton", "Lab Art Aromatique - Kabut Pagi"], "layeringRestrictions": []}, {"id": 41, "name": "Hinoki Sublime", "brand": "Layr", "olfactoryFamily": "Woody Tea", "topNotes": ["Silver Needle Tea", "Rose", "Pear"], "middleNotes": ["Hinoki Cypress", "Lily of the Valley", "Jasmine", "Leather"], "baseNotes": ["Cashmeran", "Styrax", "Frankincense", "Amber"], "season": ["Fall", "Winter"], "timeOfDay": ["Afternoon", "Evening"], "occasion": ["Office", "Date"], "projection": "Moderate", "longevity": "8-10h", "mood": ["Sophisticated", "Relaxed"], "personalNotes": "", "rating": 0, "layeringPartners": ["Botanical Essential - Summer Fling", "Fordive - Shelby", "Hint - Cotton"], "layeringRestrictions": []}, {"id": 42, "name": "Vertigo Mint", "brand": "Maison Amare Studio", "olfactoryFamily": "Fresh Aromatic", "topNotes": ["Lemongrass"], "middleNotes": ["Peppermint"], "baseNotes": ["Ginger"], "season": ["Summer"], "timeOfDay": ["Morning"], "occasion": ["Sport", "Outdoor"], "projection": "Moderate", "longevity": "2-4h", "mood": ["Energetic"], "personalNotes": "", "rating": 0, "layeringPartners": ["Aoera - Royale", "Aoera - Sweet Coconut", "Bjorka - 7 AM"], "layeringRestrictions": ["Lab Art Aromatique - Asvara", "Layr - Get Naked", "Saka - Treasure"]}, {"id": 43, "name": "Coral Drift", "brand": "Maison Amare Studio", "olfactoryFamily": "Marine", "topNotes": ["Pomegranate"], "middleNotes": ["Marine Notes", "Breeze Accord"], "baseNotes": ["Light Sandalwood"], "season": ["Summer"], "timeOfDay": ["Morning", "Afternoon"], "occasion": ["Outdoor", "Casual"], "projection": "Moderate", "longevity": "4-6h", "mood": ["Happy", "Relaxed"], "personalNotes": "", "rating": 0, "layeringPartners": ["Aoera - Prestige", "Amthra - November Rain", "Bohe - Soleil"], "layeringRestrictions": ["Lab Art Aromatique - Asvara", "Layr - Get Naked", "Saka - Treasure"]}, {"id": 44, "name": "TA TE", "brand": "Mars on Earth", "olfactoryFamily": "Fruity Floral", "topNotes": ["Pear", "Pineapple", "Grapefruit"], "middleNotes": ["Jasmine", "Lily of the Valley", "Tuberose"], "baseNotes": ["Cedar", "Musk", "Amberwood"], "season": ["Spring", "Summer"], "timeOfDay": ["Afternoon"], "occasion": ["Casual", "Date"], "projection": "Moderate", "longevity": "4-6h", "mood": ["Happy", "Romantic"], "personalNotes": "", "rating": 0, "layeringPartners": ["Bohe - Sage", "Nostalgy - Echoes of Aqua", "Nostalgy - Teh Sereh Extrait"], "layeringRestrictions": []}, {"id": 45, "name": "808", "brand": "Mars on Earth", "olfactoryFamily": "Fruity Chypre", "topNotes": ["Grapefruit", "Apricot", "Blackcurrant"], "middleNotes": ["Geranium", "Frozen Rose", "Pear Blossom"], "baseNotes": ["Moss", "Vetiver", "White Musk"], "season": ["Spring", "Summer"], "timeOfDay": ["Morning", "Afternoon"], "occasion": ["Office", "Casual"], "projection": "Moderate", "longevity": "4-6h", "mood": ["Energetic", "Happy"], "personalNotes": "", "rating": 0, "layeringPartners": ["Deepi - Warm Morning", "Bohe - Sage", "Compounded By - Akira"], "layeringRestrictions": ["Lab Art Aromatique - Asvara", "Saka - Treasure", "Layr - Get Naked"]}, {"id": 46, "name": "Monaco Royale", "brand": "Mykonos", "olfactoryFamily": "Fresh Woody", "topNotes": ["Melon", "Pear", "Green Notes"], "middleNotes": ["Soft Woods", "Cedarwood"], "baseNotes": ["Caramel", "Musk", "Moss"], "season": ["Summer", "Spring"], "timeOfDay": ["Afternoon"], "occasion": ["Casual", "Office"], "projection": "Moderate", "longevity": "4-6h", "mood": ["Relaxed"], "personalNotes": "", "rating": 0, "layeringPartners": ["Bohe - Sage", "Deepi - Warm Morning", "Layr - Chronic Tonic"], "layeringRestrictions": []}, {"id": 47, "name": "California Blue", "brand": "Mykonos", "olfactoryFamily": "Marine Fresh", "topNotes": ["Lavender", "Pear", "Grapefruit", "Pink Salt"], "middleNotes": ["Rhubarb", "Water Blossoms", "Marine Notes"], "baseNotes": ["Moss", "Soft Woods", "Caramel"], "season": ["Summer"], "timeOfDay": ["Morning", "Afternoon"], "occasion": ["Outdoor", "Casual"], "projection": "Moderate", "longevity": "4-6h", "mood": ["Relaxed", "Happy"], "personalNotes": "", "rating": 0, "layeringPartners": ["Amthra - November Rain", "Mars on Earth - 808", "Aoera - Prestige"], "layeringRestrictions": ["Lab Art Aromatique - Asvara", "Saka - Treasure", "Layr - Get Naked"]}, {"id": 48, "name": "California Signature", "brand": "Mykonos", "olfactoryFamily": "Aromatic Fresh", "topNotes": ["Mandarin Orange", "Lemon"], "middleNotes": ["Lychee", "Rosemary", "Cardamom", "Lavender", "Geranium", "Aquatic Notes"], "baseNotes": ["Tonka Bean", "Teak Wood", "Vetiver"], "season": ["Spring", "Summer"], "timeOfDay": ["Morning", "Afternoon"], "occasion": ["Office", "Casual"], "projection": "Moderate", "longevity": "6-8h", "mood": ["Energetic", "Relaxed"], "personalNotes": "", "rating": 0, "layeringPartners": ["Velixir - Helios", "Compounded By - Akira", "Deepi - Warm Morning"], "layeringRestrictions": ["Lab Art Aromatique - Asvara", "Layr - Get Naked", "Saka - Treasure"]}, {"id": 49, "name": "Dreamscape", "brand": "Mykonos", "olfactoryFamily": "Tropical Spicy", "topNotes": ["Mango", "Tangerine", "Rhubarb"], "middleNotes": ["Ginger", "Jasmine", "Violet", "Praline", "Pink Pepper"], "baseNotes": ["Cedar", "Grey Amber", "Tonka Bean", "Cypriol Oil"], "season": ["Summer", "Spring"], "timeOfDay": ["Afternoon", "Evening"], "occasion": ["Casual", "Date"], "projection": "Moderate", "longevity": "6-8h", "mood": ["Happy", "Romantic"], "personalNotes": "", "rating": 0, "layeringPartners": ["Scentalgia - Nocturne", "Bohe - Noir", "Bohe - Midas"], "layeringRestrictions": ["Maison Amare Studio - Coral Drift", "Mykonos - California Blue", "Saka - Etherwave"]}, {"id": 50, "name": "Silent Whisper", "brand": "Mykonos", "olfactoryFamily": "Soft Fruity", "topNotes": ["Apple", "Honeydew", "Melon"], "middleNotes": ["Lily of the Valley", "Amber"], "baseNotes": ["Vanilla", "Amber"], "season": ["Spring", "Summer"], "timeOfDay": ["Afternoon"], "occasion": ["Casual", "Date"], "projection": "Intimate", "longevity": "4-6h", "mood": ["Romantic", "Relaxed"], "personalNotes": "", "rating": 0, "layeringPartners": ["Hint - Cotton", "Layr - Kyoto Jazz", "Aoera - Royale"], "layeringRestrictions": ["Lab Art Aromatique - Asvara", "Saka - Treasure", "Layr - Get Naked"]}, {"id": 51, "name": "Sorrento", "brand": "Mykonos", "olfactoryFamily": "Citrus Floral", "topNotes": ["Fizzy Grapefruit", "Bergamot", "Mandarin Orange", "Magnolia", "Ginger"], "middleNotes": ["Neroli", "Ginger", "Powdery Notes", "Water Notes"], "baseNotes": ["Amber", "Musk", "Cedar", "Patchouli", "Orris Root"], "season": ["Summer", "Spring"], "timeOfDay": ["Morning", "Afternoon"], "occasion": ["Casual", "Outdoor"], "projection": "Moderate", "longevity": "4-6h", "mood": ["Happy", "Energetic"], "personalNotes": "", "rating": 0, "layeringPartners": ["Layr - Kyoto Jazz", "Aoera - Prestige", "Bohe - Sage"], "layeringRestrictions": []}, {"id": 52, "name": "Tobacco Royale", "brand": "Myra", "olfactoryFamily": "Aromatic Woody", "topNotes": ["Cardamom", "Mandarin", "Lemon", "Bergamot"], "middleNotes": ["Mint", "Grapefruit", "Soft Woods"], "baseNotes": ["Dry Amber", "Tonka Beans", "Musk"], "season": ["Fall", "Winter"], "timeOfDay": ["Evening"], "occasion": ["Formal", "Date"], "projection": "Moderate", "longevity": "6-8h", "mood": ["Sophisticated"], "personalNotes": "", "rating": 0, "layeringPartners": ["Aoera - Royale", "Aoera - Sweet Coconut", "Bjorka - 7 AM"], "layeringRestrictions": []}, {"id": 53, "name": "Echoes of Aqua", "brand": "Nostalgy", "olfactoryFamily": "Fresh Citrus", "topNotes": ["Apple", "Bergamot", "Orange", "Ginger"], "middleNotes": ["Orange Blossom", "Pineapple"], "baseNotes": ["Ambroxan", "Akigalawood", "Cedar", "Musk"], "season": ["Summer", "Spring"], "timeOfDay": ["Morning", "Afternoon"], "occasion": ["Casual", "Outdoor"], "projection": "Moderate", "longevity": "6-8h", "mood": ["Energetic", "Happy"], "personalNotes": "", "rating": 0, "layeringPartners": ["Bohe - Sage", "Mars on Earth - TA TE", "Mykonos - Sorrento"], "layeringRestrictions": ["Lab Art Aromatique - Asvara", "Saka - Treasure", "Layr - Get Naked"]}, {"id": 54, "name": "Teh Sereh Extrait", "brand": "Nostalgy", "olfactoryFamily": "Tea", "topNotes": ["Black Tea", "Chamomile", "Orange"], "middleNotes": ["Lemongrass", "Jasmine"], "baseNotes": ["Cedar", "Bergamot", "Musk"], "season": ["Spring", "Summer"], "timeOfDay": ["Morning", "Afternoon"], "occasion": ["Office", "Casual"], "projection": "Moderate", "longevity": "6-8h", "mood": ["Relaxed"], "personalNotes": "", "rating": 0, "layeringPartners": ["Mars on Earth - TA TE", "Mykonos - Sorrento", "Nostalgy - Echoes of Aqua"], "layeringRestrictions": []}, {"id": 55, "name": "Winter in Rovaniemi", "brand": "Nostalgy", "olfactoryFamily": "Warm Floral Oriental", "topNotes": ["Bergamot", "Ylang Ylang", "Almond"], "middleNotes": ["Rose", "Iris", "Opoponax", "Cardamom"], "baseNotes": ["Vanilla", "Amber", "Patchouli", "Musk", "Tonka Bean"], "season": ["Fall", "Winter"], "timeOfDay": ["Evening"], "occasion": ["Date", "Formal"], "projection": "Moderate", "longevity": "8-10h", "mood": ["Cozy", "Romantic"], "personalNotes": "", "rating": 0, "layeringPartners": ["Bohe - Midas", "Crusita - Gentlemen", "Lab Art Aromatique - Kala Hujan"], "layeringRestrictions": ["Farbash - Toba", "Maison Amare Studio - Coral Drift", "Mykonos - California Blue"]}, {"id": 56, "name": "Lucid Dream", "brand": "Polka", "olfactoryFamily": "Floral Oriental", "topNotes": ["Lavender", "Mandarin Orange", "Bergamot"], "middleNotes": ["Tunisian Orange Blossom", "Jasmine Sambac", "Orchid"], "baseNotes": ["Madagascar Vanilla", "Tonka Beans", "Ambergris", "Vetiver"], "season": ["Spring", "Summer", "Fall"], "timeOfDay": ["Evening"], "occasion": ["Date", "Casual"], "projection": "Moderate", "longevity": "6-8h", "mood": ["Romantic", "Relaxed"], "personalNotes": "", "rating": 0, "layeringPartners": ["Lab Art Aromatique - Kala Hujan", "Myra - Tobacco Royale", "Bohe - Noir"], "layeringRestrictions": ["Farbash - Toba", "Maison Amare Studio - Coral Drift", "Mykonos - California Blue"]}, {"id": 57, "name": "Cloud Bomb", "brand": "Polka", "olfactoryFamily": "Soft Musky", "topNotes": ["White Musk"], "middleNotes": ["Rice", "Mimosa"], "baseNotes": ["Blonde Woods"], "season": ["Spring", "Summer", "Fall", "Winter"], "timeOfDay": ["Morning", "Afternoon"], "occasion": ["Casual", "Office"], "projection": "Intimate", "longevity": "4-6h", "mood": ["Relaxed", "Cozy"], "personalNotes": "", "rating": 0, "layeringPartners": ["Aoera - Royale", "Aoera - Sweet Coconut", "Bjorka - 7 AM"], "layeringRestrictions": []}, {"id": 58, "name": "Ceremony 29", "brand": "Rahasia", "olfactoryFamily": "Incense Floral", "topNotes": ["Incense", "Lemon", "Turmeric Leaf"], "middleNotes": ["Rose"], "baseNotes": ["Vetiver", "Living Hinoki", "Olibanum", "Patchouli", "Amber", "Musk"], "season": ["Fall", "Winter"], "timeOfDay": ["Evening"], "occasion": ["Formal", "Casual"], "projection": "Moderate", "longevity": "6-8h", "mood": ["Mysterious", "Relaxed"], "personalNotes": "", "rating": 0, "layeringPartners": ["Lab Art Aromatique - Kala Hujan", "Layr - Osmanthus", "Scent of Pluto - Through The Mystic Forest"], "layeringRestrictions": ["Farbash - Toba", "Maison Amare Studio - Coral Drift", "Mykonos - California Blue"]}, {"id": 59, "name": "Greendaze", "brand": "Saka", "olfactoryFamily": "Green Aromatic", "topNotes": ["Basil", "Tomato Leaf", "Green Mandarin", "Bergamot"], "middleNotes": ["Tomato", "Celeri Salt", "Rose", "Bucchu"], "baseNotes": ["Sea Salt", "Musk", "Cedarwood"], "season": ["Summer", "Spring"], "timeOfDay": ["Morning", "Afternoon"], "occasion": ["Outdoor", "Casual"], "projection": "Moderate", "longevity": "4-6h", "mood": ["Energetic", "Relaxed"], "personalNotes": "", "rating": 0, "layeringPartners": ["Aoera - Sweet Coconut", "Bjorka - Folks", "Hint - Cotton"], "layeringRestrictions": ["Lab Art Aromatique - Asvara", "Saka - Treasure", "Layr - Get Naked"]}, {"id": 60, "name": "After Bath", "brand": "Saka", "olfactoryFamily": "Fresh Floral", "topNotes": ["Neroli", "Dihydromyrcenol", "Verbena", "Aldehydes"], "middleNotes": ["Rose", "Jasmine", "Orange Flower"], "baseNotes": ["Milk Accord", "Sandalwood", "Ambroxan", "Musk"], "season": ["Spring", "Summer"], "timeOfDay": ["Morning"], "occasion": ["Casual"], "projection": "Intimate", "longevity": "4-6h", "mood": ["Relaxed", "Happy"], "personalNotes": "", "rating": 0, "layeringPartners": ["Crusita - Gentlemen", "Deepi - Warm Morning", "Layr - Kyoto Jazz"], "layeringRestrictions": []}, {"id": 61, "name": "Teaphoria", "brand": "Saka", "olfactoryFamily": "Fresh Fruity", "topNotes": ["Bergamot", "Pink Grapefruit", "Pear", "Mandarin Orange"], "middleNotes": ["Apple", "Cedarwood", "Orange Blossom"], "baseNotes": ["Vanilla", "Amber Dry", "Musk"], "season": ["Spring", "Summer"], "timeOfDay": ["Morning", "Afternoon"], "occasion": ["Office", "Casual"], "projection": "Moderate", "longevity": "4-6h", "mood": ["Happy", "Relaxed"], "personalNotes": "", "rating": 0, "layeringPartners": ["Aoera - Royale", "Aoera - Sweet Coconut", "Hint - Cotton"], "layeringRestrictions": ["Lab Art Aromatique - Asvara", "Saka - Treasure", "Layr - Get Naked"]}, {"id": 62, "name": "Etherwave", "brand": "Saka", "olfactoryFamily": "Marine Aromatic", "topNotes": ["Sage Officinalis", "Sea Salt", "Bergamot"], "middleNotes": ["Sea Water", "Seaweed", "Barbarie Fig"], "baseNotes": ["Driftwood", "Oakmoss", "Ambergris"], "season": ["Summer"], "timeOfDay": ["Morning", "Afternoon"], "occasion": ["Outdoor", "Casual"], "projection": "Moderate", "longevity": "4-6h", "mood": ["Relaxed", "Energetic"], "personalNotes": "", "rating": 0, "layeringPartners": ["Aoera - Prestige", "Amthra - November Rain", "Bohe - Soleil"], "layeringRestrictions": ["Lab Art Aromatique - Asvara", "Layr - Get Naked", "Saka - Treasure"]}, {"id": 63, "name": "Treasure", "brand": "Saka", "olfactoryFamily": "Smoky Leather", "topNotes": ["Violet Leaf", "French Violet"], "middleNotes": ["Powdery Notes", "Ozonic Accord", "Aquatic Notes"], "baseNotes": ["Smoky Notes", "Leather"], "season": ["Fall", "Winter"], "timeOfDay": ["Evening", "Night"], "occasion": ["Night Out", "Date"], "projection": "Moderate", "longevity": "6-8h", "mood": ["Mysterious", "Sophisticated"], "personalNotes": "", "rating": 0, "layeringPartners": ["Layr - Chronic Tonic", "Layr - Osmanthus", "Altar - Nigredo"], "layeringRestrictions": ["Farbash - Toba", "Maison Amare Studio - Coral Drift", "Mykonos - California Blue"]}, {"id": 64, "name": "Harrod's", "brand": "Saka", "olfactoryFamily": "Fruity Floral", "topNotes": ["Black Currant", "White Peach", "Coconut", "Calabrian Bergamot"], "middleNotes": ["Violet", "Egyptian Jasmine", "Bulgarian Rose"], "baseNotes": ["Vanilla", "White Musk"], "season": ["Spring", "Summer"], "timeOfDay": ["Afternoon"], "occasion": ["Casual", "Date"], "projection": "Moderate", "longevity": "4-6h", "mood": ["Happy", "Romantic"], "personalNotes": "", "rating": 0, "layeringPartners": ["Botanical Essential - In The Clouds", "Crusita - Gentlemen", "D/C/UM - Auralis"], "layeringRestrictions": []}, {"id": 65, "name": "Nocturne", "brand": "Scentalgia", "olfactoryFamily": "Aromatic Woody", "topNotes": ["Lemon", "Bergamot", "Lavender"], "middleNotes": ["Nutmeg", "Violet", "Vetiver"], "baseNotes": ["Tonka Bean", "Suede", "Sandalwood"], "season": ["Fall", "Winter"], "timeOfDay": ["Evening", "Night"], "occasion": ["Night Out", "Date"], "projection": "Moderate", "longevity": "6-8h", "mood": ["Mysterious", "Sophisticated"], "personalNotes": "", "rating": 0, "layeringPartners": ["Aoera - Royale", "Bjorka - 7 AM", "Bohe - Midas"], "layeringRestrictions": []}, {"id": 66, "name": "Lost in Italian Sea", "brand": "Scent of Pluto", "olfactoryFamily": "Floral", "topNotes": ["Bergamot", "Aldehydes"], "middleNotes": ["Jasmine", "Orange Blossom"], "baseNotes": ["Sandalwood", "White Musk"], "season": ["Summer", "Spring"], "timeOfDay": ["Afternoon"], "occasion": ["Casual", "Date"], "projection": "Moderate", "longevity": "4-6h", "mood": ["Relaxed", "Happy"], "personalNotes": "", "rating": 0, "layeringPartners": ["Crusita - Gentlemen", "Deepi - Warm Morning", "Fordive - Shelby"], "layeringRestrictions": ["Bjorka - Folks"]}, {"id": 67, "name": "Hugged in Cashmere", "brand": "Scent of Pluto", "olfactoryFamily": "Soft Woody", "topNotes": ["Bergamot", "Cistus", "Pepper"], "middleNotes": ["Saffron", "Violet", "Black Sesame"], "baseNotes": ["Musk", "Sandalwood", "Cashmere Wood"], "season": ["Fall", "Winter"], "timeOfDay": ["Evening"], "occasion": ["Date", "Casual"], "projection": "Moderate", "longevity": "6-8h", "mood": ["Cozy", "Romantic"], "personalNotes": "", "rating": 0, "layeringPartners": ["Aoera - Royale", "Bjorka - 7 AM", "Deepi - Warm Morning"], "layeringRestrictions": []}, {"id": 68, "name": "The Active Project", "brand": "Scent of Pluto", "olfactoryFamily": "Fresh Spicy", "topNotes": ["Mandarin", "Bergamot", "Orange"], "middleNotes": ["Neroli", "Pepper", "Cardamom"], "baseNotes": ["Musk", "Amber", "Vetiver"], "season": ["Spring", "Summer"], "timeOfDay": ["Morning", "Afternoon"], "occasion": ["Sport", "Outdoor"], "projection": "Moderate", "longevity": "4-6h", "mood": ["Energetic"], "personalNotes": "", "rating": 0, "layeringPartners": ["Lab Art Aromatique - Kala Hujan", "Layr - Osmanthus", "Scent of Pluto - Through The Mystic Forest"], "layeringRestrictions": ["Farbash - Toba", "Maison Amare Studio - Coral Drift", "Mykonos - California Blue"]}, {"id": 69, "name": "Vanity Room", "brand": "Scent of Pluto", "olfactoryFamily": "Soft Herbal", "topNotes": ["Chamomile", "Clary Sage"], "middleNotes": ["Water Accord", "Cypriol"], "baseNotes": ["Amber", "Musk", "Blond Wood"], "season": ["Spring"], "timeOfDay": ["Afternoon"], "occasion": ["Casual"], "projection": "Intimate", "longevity": "4-6h", "mood": ["Relaxed"], "personalNotes": "", "rating": 0, "layeringPartners": ["Hint - Cotton", "Lab Art Aromatique - Kabut Pagi", "Mykonos - Sorrento"], "layeringRestrictions": []}, {"id": 70, "name": "Through The Mystic Forest", "brand": "Scent of Pluto", "olfactoryFamily": "Green Woody", "topNotes": ["Italian Cypress", "Myrtle", "Rose"], "middleNotes": ["Sandalwood", "Cedarwood"], "baseNotes": ["Amber", "Musk", "Rosewood"], "season": ["Fall", "Spring"], "timeOfDay": ["Afternoon"], "occasion": ["Outdoor", "Casual"], "projection": "Moderate", "longevity": "6-8h", "mood": ["Relaxed", "Mysterious"], "personalNotes": "", "rating": 0, "layeringPartners": ["Lab Art Aromatique - Kabut Pagi", "Layr - Alexandra", "Layr - Kyoto Jazz"], "layeringRestrictions": []}, {"id": 71, "name": "Elamore", "brand": "TRE", "olfactoryFamily": "Spicy Gourmand", "topNotes": ["Citrus Accord", "Pink Pepper"], "middleNotes": ["Cardamom"], "baseNotes": ["White Musk", "Cocoa"], "season": ["Fall", "Spring"], "timeOfDay": ["Afternoon", "Evening"], "occasion": ["Casual", "Date"], "projection": "Moderate", "longevity": "4-6h", "mood": ["Relaxed", "Romantic"], "personalNotes": "", "rating": 0, "layeringPartners": ["Altar - Nigredo", "Amthra - Sophisticated", "Botanical Essential - In The Clouds"], "layeringRestrictions": ["Farbash - Toba", "Maison Amare Studio - Coral Drift", "Mykonos - California Blue"]}, {"id": 72, "name": "5 AM", "brand": "Valord", "olfactoryFamily": "Fresh Woody", "topNotes": ["Lemon", "Mandarin", "Apple"], "middleNotes": ["Cedarwood", "Solar Jasmine", "Magnolia"], "baseNotes": ["Woody Amber", "Teak Wood", "Musk"], "season": ["Spring", "Summer"], "timeOfDay": ["Morning"], "occasion": ["Office", "Casual"], "projection": "Moderate", "longevity": "4-6h", "mood": ["Energetic"], "personalNotes": "", "rating": 0, "layeringPartners": ["Aoera - Royale", "Aoera - Sweet Coconut", "Bjorka - 7 AM"], "layeringRestrictions": []}, {"id": 73, "name": "Helios", "brand": "Velixir", "olfactoryFamily": "Marine Tropical", "topNotes": ["Coconut", "Mint", "Woody Notes"], "middleNotes": ["Fig", "Marine Notes"], "baseNotes": ["Woody Notes", "Tonka Bean", "Vetiver"], "season": ["Summer"], "timeOfDay": ["Morning", "Afternoon"], "occasion": ["Outdoor", "Casual"], "projection": "Moderate", "longevity": "4-6h", "mood": ["Happy", "Energetic"], "personalNotes": "", "rating": 0, "layeringPartners": ["Crusita - Busy Day", "Mykonos - California Signature", "Velixir - Adonis"], "layeringRestrictions": ["Layr - Get Naked", "Saka - Treasure", "Lab Art Aromatique - Asvara"]}, {"id": 74, "name": "Orion", "brand": "Velixir", "olfactoryFamily": "Gourmand Spicy", "topNotes": ["Bergamot", "Cinnamon"], "middleNotes": ["Bourbon Vanilla", "Praline", "Ambroxan"], "baseNotes": ["Woody Notes", "Amber", "Musk", "Heliotrope"], "season": ["Fall", "Winter"], "timeOfDay": ["Evening"], "occasion": ["Date", "Night Out"], "projection": "Moderate", "longevity": "6-8h", "mood": ["Romantic", "Cozy"], "personalNotes": "", "rating": 0, "layeringPartners": ["Lab Art Aromatique - Kala Hujan", "Layr - Alexandra", "Layr - Osmanthus"], "layeringRestrictions": ["Farbash - Toba", "Maison Amare Studio - Coral Drift", "Mykonos - California Blue"]}, {"id": 75, "name": "Adonis", "brand": "Velixir", "olfactoryFamily": "Aromatic Fougère", "topNotes": ["Lavender", "Bergamot", "Mint"], "middleNotes": ["Madagascar Vanilla", "Benzoin"], "baseNotes": ["Amber", "Tonka Bean", "Woody Notes"], "season": ["Spring", "Fall"], "timeOfDay": ["Morning", "Afternoon"], "occasion": ["Office", "Date"], "projection": "Moderate", "longevity": "6-8h", "mood": ["Relaxed", "Romantic"], "personalNotes": "", "rating": 0, "layeringPartners": ["Velixir - Helios", "Hint - Cotton", "Lab Art Aromatique - Kabut Pagi"], "layeringRestrictions": ["Saka - Treasure", "Lab Art Aromatique - Asvara", "Layr - Get Naked"]}, {"id": 76, "name": "Icarus", "brand": "Velixir", "olfactoryFamily": "Fresh Citrus Woody", "topNotes": ["Pear", "Calabrian Bergamot", "Mandarin Orange"], "middleNotes": ["Ginger", "Orange Blossom", "Georgy Wood"], "baseNotes": ["Musk", "Ambrofix", "Akigalawood", "Cedarwood"], "season": ["Spring", "Summer"], "timeOfDay": ["Morning", "Afternoon"], "occasion": ["Office", "Casual"], "projection": "Moderate", "longevity": "6-8h", "mood": ["Energetic", "Happy"], "personalNotes": "", "rating": 0, "layeringPartners": ["Aoera - Sweet Coconut", "Bjorka - Folks", "Hint - Cotton"], "layeringRestrictions": []}, {"id": 77, "name": "Morpheus", "brand": "Velixir", "olfactoryFamily": "Citrus Woody Tea", "topNotes": ["Citron", "Sicilian Orange", "Bergamot"], "middleNotes": ["Ginger", "Neroli"], "baseNotes": ["Ambroxan", "Guaiac Wood", "Black Tea"], "season": ["Spring", "Fall"], "timeOfDay": ["Morning", "Afternoon"], "occasion": ["Office", "Casual"], "projection": "Moderate", "longevity": "6-8h", "mood": ["Sophisticated", "Relaxed"], "personalNotes": "", "rating": 0, "layeringPartners": ["Bohe - Soleil", "Nostalgy - Echoes of Aqua", "Saka - After Bath"], "layeringRestrictions": []}, {"id": 78, "name": "Poseidon", "brand": "Velixir", "olfactoryFamily": "Marine Citrus", "topNotes": ["Mandarin Orange", "Bergamot"], "middleNotes": ["Ginger"], "baseNotes": ["Ambergris"], "season": ["Summer", "Spring"], "timeOfDay": ["Morning", "Afternoon"], "occasion": ["Outdoor", "Casual"], "projection": "Moderate", "longevity": "4-6h", "mood": ["Energetic"], "personalNotes": "", "rating": 0, "layeringPartners": ["Aoera - Prestige", "Amthra - November Rain", "Bohe - Soleil"], "layeringRestrictions": ["Lab Art Aromatique - Asvara", "Layr - Get Naked", "Saka - Treasure"]}, {"id": 79, "name": "Copium", "brand": "Xociety", "olfactoryFamily": "Soft Aromatic", "topNotes": ["Chamomile"], "middleNotes": ["Pear"], "baseNotes": ["Sandalwood", "Musk"], "season": ["Spring"], "timeOfDay": ["Afternoon"], "occasion": ["Casual"], "projection": "Intimate", "longevity": "4-6h", "mood": ["Relaxed"], "personalNotes": "", "rating": 0, "layeringPartners": ["Bjorka - 7 AM", "Deepi - Warm Morning", "Hint - Cotton"], "layeringRestrictions": ["Lab Art Aromatique - Asvara", "Saka - Treasure", "Layr - Get Naked"]}, {"id": 80, "name": "Nothing", "brand": "Unusual", "olfactoryFamily": "Fruity Floral", "topNotes": ["Fruity Notes"], "middleNotes": ["White Floral Notes"], "baseNotes": ["Ambroxan", "Iso E Super"], "season": ["Spring", "Summer"], "timeOfDay": ["Morning", "Afternoon"], "occasion": ["Casual"], "projection": "Moderate", "longevity": "4-6h", "mood": ["Happy"], "personalNotes": "", "rating": 0, "layeringPartners": ["Bohe - Soleil", "Compounded By - Akira", "Nostalgy - Echoes of Aqua"], "layeringRestrictions": []}, {"id": 83, "name": "Between Hours", "brand": "Saka", "olfactoryFamily": "Fresh Airy", "topNotes": ["Rose", "Lily of the Valley", "Jasmine", "Sandalwood"], "middleNotes": ["Clove", "Lemon", "Coniferous", "Lime"], "baseNotes": ["Cumin", "Vegetables", "Silver Needle Tea"], "season": ["Spring", "Fall"], "timeOfDay": ["Morning", "Afternoon"], "occasion": ["Casual", "Office", "Outdoor", "Sport"], "projection": "Strong", "longevity": "6-8h", "mood": [], "personalNotes": "", "rating": 0, "layeringPartners": [], "layeringRestrictions": []}, {"id": 84, "name": "Clock Out", "brand": "Saka", "olfactoryFamily": "Fresh Creamy", "topNotes": ["Bergamot", "Aromatic", "Cocoa Butter"], "middleNotes": ["Jasmine Sambac", "Orange Flower"], "baseNotes": ["Patchouli", "Amber Dry", "Guaiac Wood", "Vanilla", "Musk"], "season": ["Spring", "Summer", "Fall"], "timeOfDay": ["Morning", "Afternoon"], "occasion": ["Casual", "Office", "Date"], "projection": "Strong", "longevity": "8-10h", "mood": [], "personalNotes": "", "rating": 0, "layeringPartners": [], "layeringRestrictions": []}, {"id": 85, "name": "Lost in Sahara", "brand": "YN Perfumery", "olfactoryFamily": "Bold, Smoky, and Spicy", "topNotes": ["Bergamot", "Cinnamon", "Date", "Lavandin"], "middleNotes": ["Smoked Wood", "Nutmeg", "Incense", "Pink Pepper"], "baseNotes": ["Cedarwood", "Sandalwood", "Vanilla Wood", "Drywood"], "season": ["Fall", "Winter"], "timeOfDay": ["Afternoon", "Evening", "Night"], "occasion": ["Date", "Formal", "Night Out"], "projection": "Moderate", "longevity": "6-8h", "mood": [], "personalNotes": "", "rating": 0, "layeringPartners": [], "layeringRestrictions": []}, {"id": 86, "name": "Floating in the Arctic", "brand": "YN Perfumery", "olfactoryFamily": "Fresh, Crisp, Metallic", "topNotes": ["Lemon", "Blackcurrent", "Elemi"], "middleNotes": ["Jasmine", "Rose", "Vetiver"], "baseNotes": ["Musk", "Cedarwood", "Patchouli"], "season": ["Spring", "Summer", "Fall", "Winter"], "timeOfDay": ["Morning", "Afternoon"], "occasion": ["Casual", "Office", "Outdoor", "Sport"], "projection": "Moderate", "longevity": "6-8h", "mood": [], "personalNotes": "", "rating": 0, "layeringPartners": [], "layeringRestrictions": []}, {"id": 87, "name": "Land of Paradise", "brand": "Crusita", "olfactoryFamily": "Bright, Citrusy, Aromatic", "topNotes": ["Grapefruit", "Bergamot", "Lemon", "Ginger"], "middleNotes": ["Lily of the Valley", "Eucalyptus", "Calone", "Peach"], "baseNotes": ["Musk", "Amber", "Moss"], "season": ["Spring", "Summer"], "timeOfDay": ["Morning", "Afternoon"], "occasion": ["Casual", "Office", "Outdoor", "Sport"], "projection": "Moderate", "longevity": "6-8h", "mood": [], "personalNotes": "", "rating": 0, "layeringPartners": [], "layeringRestrictions": []}, {"id": 88, "name": "Farhampton", "brand": "HMNS", "olfactoryFamily": "Aromatic Fougère", "topNotes": ["Bergamot", "ripe fruit"], "middleNotes": ["Lavender", "orange blossom"], "baseNotes": ["Natural labdanum amber", "cedarwood", "tonka bean"], "season": ["Fall", "Winter"], "timeOfDay": ["Evening", "Night"], "occasion": ["Casual", "Office", "Date"], "projection": "Moderate", "longevity": "6-8h", "mood": ["Warm", "Intimate", "Elegant", "Calm"], "personalNotes": "", "rating": 0, "layeringPartners": [], "layeringRestrictions": []}, {"id": 89, "name": "City of Hope", "brand": "HMNS", "olfactoryFamily": "Floral Green", "topNotes": ["Grapefruit", "ginger", "spearmint"], "middleNotes": ["Exotic flower accord", "jasmine sambac", "hyacinth"], "baseNotes": ["Driftwood", "musk", "patchouli"], "season": ["Spring", "Summer"], "timeOfDay": ["Morning", "Afternoon"], "occasion": ["Casual", "Office"], "projection": "Moderate", "longevity": "6-8h", "mood": ["Uplifting", "comforting", "clean", "cultural"], "personalNotes": "", "rating": 0, "layeringPartners": [], "layeringRestrictions": []}, {"id": 90, "name": "Ambar (Ambar Janma)", "brand": "HMNS", "olfactoryFamily": "Woody, Ambery, Floral", "topNotes": ["Sandalwood"], "middleNotes": ["Amberwood", "Suede"], "baseNotes": ["Gayo Patchouli"], "season": ["Spring", "Fall", "Winter"], "timeOfDay": ["Afternoon", "Evening", "Night"], "occasion": ["Casual", "Office", "Date", "Formal", "Night Out"], "projection": "Moderate", "longevity": "6-8h", "mood": ["Elegant", "Luxurious", "Warm", "Seductive"], "personalNotes": "", "rating": 0, "layeringPartners": [], "layeringRestrictions": []}, {"id": 91, "name": "Janma (Ambar Janma)", "brand": "HMNS", "olfactoryFamily": "Floral Woody Musk, Ambery Floral", "topNotes": ["Bulgarian Rose", "Black Tea"], "middleNotes": ["Pink Pepper", "Neroli"], "baseNotes": ["Lily of the Valley"], "season": ["Spring", "Fall", "Winter"], "timeOfDay": ["Afternoon", "Evening", "Night"], "occasion": ["Office", "Date", "Formal", "Night Out"], "projection": "Strong", "longevity": "8-10h", "mood": ["Elegant", "Luxurious", "Mysterious", "Classy", "Romantic"], "personalNotes": "", "rating": 0, "layeringPartners": [], "layeringRestrictions": []}];
+
+const OVERRIDES_KEY = 'scentledger_overrides_v1';
+const UNLOCK_KEY = 'scentledger_unlocked';
+const ADMIN_PASSWORD = '05500101';
+const NEXT_ID_BASE = 1000;
+
+function loadOverrides(){
+  try{
+    const raw = localStorage.getItem(OVERRIDES_KEY);
+    if(!raw) return {added:[], removedIds:[]};
+    const o = JSON.parse(raw);
+    return {added: Array.isArray(o.added)?o.added:[], removedIds: Array.isArray(o.removedIds)?o.removedIds:[]};
+  }catch(e){ return {added:[], removedIds:[]}; }
+}
+function saveOverrides(){ try{ localStorage.setItem(OVERRIDES_KEY, JSON.stringify(overrides)); }catch(e){} }
+let overrides = loadOverrides();
+let unlocked = false;
+try{ unlocked = sessionStorage.getItem(UNLOCK_KEY) === '1'; }catch(e){}
+
+const SEASONS = ['Spring','Summer','Fall','Winter'];
+let DATA, BRANDS, FAMILIES, OCCASIONS, MOODS, ALL_NOTES;
+
+function rebuildData(){
+  DATA = [...BASE_DATA.filter(d=>!overrides.removedIds.includes(d.id)), ...overrides.added];
+  DATA.forEach(d=>{ d.label = d.brand + ' - ' + d.name; });
+  BRANDS = [...new Set(DATA.map(d=>d.brand))].sort((a,b)=>a.localeCompare(b));
+  FAMILIES = [...new Set(DATA.map(d=>d.olfactoryFamily))].sort((a,b)=>a.localeCompare(b));
+  OCCASIONS = [...new Set(DATA.flatMap(d=>d.occasion))].sort((a,b)=>a.localeCompare(b));
+  MOODS = [...new Set(DATA.flatMap(d=>d.mood))].sort((a,b)=>a.localeCompare(b));
+  ALL_NOTES = [...new Set(DATA.flatMap(d=>[...d.topNotes,...d.middleNotes,...d.baseNotes]))];
+  const fc = document.getElementById('footCount');
+  if(fc) fc.textContent = DATA.length + ' fragrances · ' + BRANDS.length + ' houses';
+}
+rebuildData();
+
+/* deterministic hash -> hue offset for family swatches (analogous to the single accent hue) */
+function hashStr(s){let h=0;for(let i=0;i<s.length;i++){h=(h<<5)-h+s.charCodeAt(i);h|=0;}return Math.abs(h);}
+function famHue(fam){const h=hashStr(fam)%50-25;return h;}
+function swatchStyle(fam){return 'filter:hue-rotate(' + famHue(fam) + 'deg) saturate(' + (100+ (hashStr(fam)%25)) + '%);';}
+
+/* ============ STATE ============ */
+const state = {
+  search:'',
+  filters:{brand:'',family:'',season:'',occasion:'',mood:''},
+  explore:{dim:'mood', tag:null},
+};
+
+/* ============ ROUTER ============ */
+const routes = {
+  home: renderHome,
+  catalogue: renderCatalogue,
+  brand: renderBrand,
+  index: renderIndex,
+  explore: renderExplore,
+  stats: renderStats,
+  layering: renderLayering,
+  admin: renderAdmin,
+};
+
+function currentRoute(){
+  const h = location.hash.replace('#/','').split('?')[0];
+  return routes[h] ? h : 'home';
+}
+
+function render(){
+  const route = currentRoute();
+  document.querySelectorAll('.nav a, .mobile-nav a').forEach(a=>{
+    a.classList.toggle('active', a.getAttribute('href') === '#/'+route);
+  });
+  const adminBtn = document.getElementById('adminBtn');
+  if(adminBtn) adminBtn.classList.toggle('active', route==='admin');
+  document.getElementById('main').innerHTML = routes[route]();
+  document.getElementById('mobileNav').classList.remove('open');
+  window.scrollTo({top:0});
+  bindMain();
+}
+window.addEventListener('hashchange', render);
+
+/* ============ HELPERS ============ */
+function esc(s){return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function countBy(arr){const m={};arr.forEach(v=>{m[v]=(m[v]||0)+1;});return m;}
+function topEntries(map, n){return Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0,n);}
+
+function matchesFilters(d){
+  const q = state.search.trim().toLowerCase();
+  if(q){
+    const hay = (d.name+' '+d.brand+' '+d.olfactoryFamily+' '+d.topNotes.join(' ')+' '+d.middleNotes.join(' ')+' '+d.baseNotes.join(' ')).toLowerCase();
+    if(!hay.includes(q)) return false;
+  }
+  const f = state.filters;
+  if(f.brand && d.brand !== f.brand) return false;
+  if(f.family && d.olfactoryFamily !== f.family) return false;
+  if(f.season && !d.season.includes(f.season)) return false;
+  if(f.occasion && !d.occasion.includes(f.occasion)) return false;
+  if(f.mood && !d.mood.includes(f.mood)) return false;
+  return true;
+}
+
+function card(d, idx){
+  const d3 = (idx!==undefined) ? (idx % 6) : 0;
+  return `<article class="card reveal-io" data-tilt style="--d:${d3}">
+    <div class="swatch">
+      <div class="swatch-fill" style="${swatchStyle(d.olfactoryFamily)}"></div>
+      <span class="swatch-fam">${esc(d.olfactoryFamily)}</span>
+    </div>
+    <div class="card-body">
+      <div class="brand-line">${esc(d.brand)}</div>
+      <h3>${esc(d.name)}</h3>
+      <div class="card-notes">${esc(d.topNotes.slice(0,4).join(', '))}</div>
+      <div class="card-tags">
+        ${d.season.map(s=>`<span class="tag">${esc(s)}</span>`).join('')}
+      </div>
+      <div class="card-foot">
+        <span class="eyebrow">${esc(d.longevity || '-')}</span>
+        <button class="btn btn-ghost btn-sm" data-open="${d.id}">Open profile</button>
+      </div>
+    </div>
+    <span class="card-mono">${esc(d.name[0])}</span>
+  </article>`;
+}
+
+function emptyState(msg){
+  return `<div class="empty"><h3>Nothing here yet</h3><p>${esc(msg)}</p></div>`;
+}
+
+/* ============ VIEW: HOME ============ */
+function renderHome(){
+  const famCounts = countBy(DATA.map(d=>d.olfactoryFamily));
+  const top6 = topEntries(famCounts, 6);
+  const sampleTags = DATA.filter((d,i)=>i%13===0).slice(0,5);
+
+  const word = (w) => `<span class="word"><span>${esc(w)}</span></span>`;
+
+  return `
+  <section class="hero band-dark">
+    <div class="wrap hero-grid">
+      <div>
+        <div class="hero-kicker reveal-io"><span class="hero-count" data-countup="${DATA.length}">0</span> fragrances in the collection</div>
+        <h1>
+          ${word("Ben's")} ${word('Fragrance')}<br>
+          ${word('Library')}${word('.')}
+        </h1>
+        <p>Every bottle in the cabinet, catalogued by note, mood and season, so the right scent is never a guess.</p>
+        <div class="hero-cta">
+          <a href="#/catalogue" class="btn btn-primary" data-magnetic>Browse the catalogue ${ICONS.arrow}</a>
+          <a href="#/layering" class="btn btn-ghost" data-magnetic>Layering calculator</a>
+        </div>
+      </div>
+      <div class="aura reveal d1" data-tilt>
+        <div class="aura-field"></div>
+        <div class="aura-grain"></div>
+        <div class="aura-tags">
+          ${sampleTags.map((t,i)=>`<span class="aura-tag" style="top:${12+i*17}%; left:${(i%2? 52:8)+ (i*3)}%;">${esc(t.brand)} · ${esc(t.name)}</span>`).join('')}
+        </div>
+      </div>
+    </div>
+    <div class="ticker">
+      <div class="ticker-track">
+        ${Array(2).fill(0).map(()=>`
+          <span><i></i>${DATA.length} fragrances catalogued</span>
+          <span><i></i>${BRANDS.length} houses represented</span>
+          <span><i></i>${FAMILIES.length} olfactory families</span>
+          <span><i></i>${ALL_NOTES.length} distinct notes logged</span>
+          <span><i></i>Updated for the full collection</span>
+        `).join('')}
+      </div>
+    </div>
+  </section>
+
+  <div class="stat-strip">
+    <div class="wrap">
+      <div class="stat-cell reveal-io" style="--d:0"><span class="num" data-countup="${DATA.length}">0</span><span class="label">Fragrances catalogued</span></div>
+      <div class="stat-cell reveal-io" style="--d:1"><span class="num" data-countup="${BRANDS.length}">0</span><span class="label">Houses represented</span></div>
+      <div class="stat-cell reveal-io" style="--d:2"><span class="num" data-countup="${FAMILIES.length}">0</span><span class="label">Olfactory families</span></div>
+      <div class="stat-cell reveal-io" style="--d:3"><span class="num" data-countup="${ALL_NOTES.length}">0</span><span class="label">Distinct notes logged</span></div>
+    </div>
+  </div>
+
+  <section>
+    <div class="wrap">
+      <div class="section-head reveal-io">
+        <h2>Explore by family</h2>
+        <p>The collection's dominant olfactory families, ranked by how often they appear.</p>
+      </div>
+      <div class="fam-grid">
+        ${top6.map(([fam,count],i)=>`
+          <a class="fam-tile reveal-io" data-tilt style="--d:${i}; ${swatchStyle(fam)}; background:linear-gradient(155deg, var(--accent), var(--accent-strong));" href="#/explore?dim=family&tag=${encodeURIComponent(fam)}">
+            <span class="fam-name">${esc(fam)}</span>
+            <span class="fam-count">${count} fragrance${count===1?'':'s'}</span>
+          </a>`).join('')}
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="cta-band reveal-io">
+        <div class="cta-band-inner">
+          <h2>Every note, cross-referenced.</h2>
+          <a href="#/layering" class="btn btn-primary" data-magnetic>Open the layering calculator</a>
+        </div>
+      </div>
+    </div>
+  </section>
+  `;
+}
+
+/* ============ VIEW: CATALOGUE ============ */
+function renderCatalogue(){
+  const results = DATA.filter(matchesFilters);
+  const chips = [];
+  Object.entries(state.filters).forEach(([k,v])=>{ if(v) chips.push({k,v}); });
+
+  return `
+  <div class="filter-bar">
+    <div class="wrap">
+      <div class="filter-row">
+        <div class="search-field">
+          ${ICONS.search}
+          <input type="text" id="searchInput" placeholder="Search by name, brand or note" value="${esc(state.search)}" />
+        </div>
+        <select class="chip-select" id="fBrand"><option value="">All houses</option>${BRANDS.map(b=>`<option value="${esc(b)}" ${state.filters.brand===b?'selected':''}>${esc(b)}</option>`).join('')}</select>
+        <select class="chip-select" id="fFamily"><option value="">All families</option>${FAMILIES.map(f=>`<option value="${esc(f)}" ${state.filters.family===f?'selected':''}>${esc(f)}</option>`).join('')}</select>
+        <select class="chip-select" id="fSeason"><option value="">All seasons</option>${SEASONS.map(s=>`<option value="${esc(s)}" ${state.filters.season===s?'selected':''}>${esc(s)}</option>`).join('')}</select>
+        <select class="chip-select" id="fOccasion"><option value="">All occasions</option>${OCCASIONS.map(s=>`<option value="${esc(s)}" ${state.filters.occasion===s?'selected':''}>${esc(s)}</option>`).join('')}</select>
+        <select class="chip-select" id="fMood"><option value="">All moods</option>${MOODS.map(s=>`<option value="${esc(s)}" ${state.filters.mood===s?'selected':''}>${esc(s)}</option>`).join('')}</select>
+        <span class="result-count">${results.length} of ${DATA.length}</span>
+      </div>
+      <div class="active-chips">
+        ${chips.map(c=>`<span class="chip">${esc(c.v)}<button data-clear="${c.k}">${ICONS.x}</button></span>`).join('')}
+      </div>
+    </div>
+  </div>
+  <div class="wrap">
+    ${results.length ? `<div class="grid">${results.map((d,i)=>card(d,i)).join('')}</div>` : emptyState('No fragrance matches these filters. Try clearing one.')}
+  </div>`;
+}
+
+/* ============ VIEW: BRAND ============ */
+function renderBrand(){
+  return `
+  <div class="wrap">
+    <section>
+      <div class="section-head reveal-io">
+        <h2>By brand</h2>
+        <p>${BRANDS.length} houses across the collection, largest first.</p>
+      </div>
+      <div class="brand-accordion">
+        ${[...BRANDS].sort((a,b)=>{
+            const ca=DATA.filter(d=>d.brand===a).length, cb=DATA.filter(d=>d.brand===b).length;
+            return cb-ca || a.localeCompare(b);
+          }).map(b=>{
+            const items = DATA.filter(d=>d.brand===b);
+            return `<details>
+              <summary><span>${esc(b)} <span class="count">${items.length} fragrance${items.length===1?'':'s'}</span></span>${ICONS.chevron}</summary>
+              <div class="brand-items">
+                ${items.map(d=>`<div class="mini-card"><div class="n">${esc(d.name)}</div><div class="f">${esc(d.olfactoryFamily)}</div></div>`).join('')}
+              </div>
+            </details>`;
+          }).join('')}
+      </div>
+    </section>
+  </div>`;
+}
+
+/* ============ VIEW: INDEX (A-Z) ============ */
+function renderIndex(){
+  const sorted = [...DATA].sort((a,b)=>a.name.localeCompare(b.name));
+  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+  const present = new Set(sorted.map(d=>d.name[0].toUpperCase()));
+  const groups = {};
+  sorted.forEach(d=>{ const L=d.name[0].toUpperCase(); (groups[L]=groups[L]||[]).push(d); });
+
+  return `
+  <div class="az-nav wrap">
+    ${letters.map(L=>`<a class="${present.has(L)?'has':'dim'}" href="${present.has(L)?'#az-'+L:'#'}">${L}</a>`).join('')}
+  </div>
+  <div class="wrap">
+    ${Object.keys(groups).sort().map(L=>`
+      <div class="az-group" id="az-${L}">
+        <div class="letter">${L}</div>
+        <div class="az-list">
+          ${groups[L].map(d=>`<a class="az-row" href="#" data-open="${d.id}"><span>${esc(d.name)}</span><span class="b">${esc(d.brand)}</span></a>`).join('')}
+        </div>
+      </div>`).join('')}
+  </div>`;
+}
+
+/* ============ VIEW: EXPLORE ============ */
+function exploreDims(){
+  return {
+    mood: MOODS,
+    season: SEASONS,
+    occasion: OCCASIONS,
+    family: FAMILIES,
+  };
+}
+function tagMatches(dim, tag, d){
+  if(dim==='family') return d.olfactoryFamily===tag;
+  return d[dim].includes(tag);
+}
+function renderExplore(){
+  const params = new URLSearchParams((location.hash.split('?')[1]||''));
+  if(params.get('dim')) state.explore.dim = params.get('dim');
+  if(params.get('tag')) state.explore.tag = params.get('tag');
+
+  const dims = exploreDims();
+  const dim = state.explore.dim;
+  const tags = dims[dim];
+  const counts = {};
+  tags.forEach(t=>{ counts[t] = DATA.filter(d=>tagMatches(dim,t,d)).length; });
+  const active = state.explore.tag;
+  const results = active ? DATA.filter(d=>tagMatches(dim,active,d)) : [];
+
+  return `
+  <div class="wrap">
+    <section>
+      <div class="section-head reveal-io">
+        <h2>Explore</h2>
+        <p>Browse the collection by mood, season, occasion or olfactory family.</p>
+      </div>
+      <div class="tab-row">
+        <button class="tab-btn ${dim==='mood'?'active':''}" data-dim="mood">Mood</button>
+        <button class="tab-btn ${dim==='season'?'active':''}" data-dim="season">Season</button>
+        <button class="tab-btn ${dim==='occasion'?'active':''}" data-dim="occasion">Occasion</button>
+        <button class="tab-btn ${dim==='family'?'active':''}" data-dim="family">Family</button>
+      </div>
+      <div class="tag-cloud">
+        ${[...tags].sort((a,b)=>counts[b]-counts[a]).map(t=>`<button class="tag-pill ${active===t?'active':''}" data-tag="${esc(t)}">${esc(t)} <span class="num">${counts[t]}</span></button>`).join('')}
+      </div>
+      ${active ? (results.length ? `<div class="grid">${results.map((d,i)=>card(d,i)).join('')}</div>` : emptyState('No fragrances tagged this way.')) : ''}
+    </section>
+  </div>`;
+}
+
+/* ============ VIEW: STATS ============ */
+function barBlock(title, entries, max, bi){
+  return `<div class="bar-block reveal-io" style="--d:${bi||0}">
+    <h3>${esc(title)}</h3>
+    ${entries.map(([label,val])=>`
+      <div class="bar-row">
+        <span class="lbl">${esc(label)}</span>
+        <div class="bar-track"><div class="bar-fill" style="--w:${Math.round(val/max*100)}%"></div></div>
+        <span class="v num" data-countup="${val}">0</span>
+      </div>`).join('')}
+  </div>`;
+}
+function renderStats(){
+  const famCounts = countBy(DATA.map(d=>d.olfactoryFamily));
+  const seasonCounts = countBy(DATA.flatMap(d=>d.season));
+  const moodCounts = countBy(DATA.flatMap(d=>d.mood));
+  const noteCounts = countBy(DATA.flatMap(d=>[...d.topNotes,...d.middleNotes,...d.baseNotes]));
+
+  const topFam = topEntries(famCounts,8);
+  const seasonEntries = SEASONS.map(s=>[s, seasonCounts[s]||0]);
+  const topMood = topEntries(moodCounts,8);
+  const topNotes = topEntries(noteCounts,10);
+
+  return `
+  <div class="wrap">
+    <section>
+      <div class="section-head reveal-io">
+        <h2>Statistics</h2>
+        <p>A quantitative read on the collection as it stands today.</p>
+      </div>
+      <div class="stats-grid">
+        ${barBlock('Top olfactory families', topFam, topFam[0][1], 0)}
+        ${barBlock('By season', seasonEntries, Math.max(...seasonEntries.map(e=>e[1]),1), 1)}
+        ${barBlock('Top moods', topMood, topMood[0][1], 2)}
+        ${barBlock('Most-used notes', topNotes, topNotes[0][1], 3)}
+      </div>
+    </section>
+  </div>`;
+}
+
+/* ============ VIEW: LAYERING ============ */
+function renderLayering(){
+  const opts = [...DATA].sort((a,b)=>a.label.localeCompare(b.label)).map(d=>`<option value="${esc(d.label)}">${esc(d.label)}</option>`).join('');
+  return `
+  <div class="wrap">
+    <section>
+      <div class="section-head reveal-io">
+        <h2>Layering</h2>
+      </div>
+      <p class="pull-quote reveal-io">Two fragrances, worn together, become a third scent neither bottle contains alone.</p>
+      <div class="playbook reveal-io" style="--d:1">
+        <p>Pick any two fragrances below. The analysis reads both note pyramids, scores how the accords interact, and works out where to wear the pairing, what order to spray it in, and which third bottle in the cabinet would round it out.</p>
+      </div>
+      <div class="calc-card reveal-io" style="--d:2">
+        <div class="calc-row">
+          <div class="field"><label>First fragrance</label><select id="calcA"><option value="">Choose one</option>${opts}</select></div>
+          <span class="calc-plus">+</span>
+          <div class="field"><label>Second fragrance</label><select id="calcB"><option value="">Choose one</option>${opts}</select></div>
+        </div>
+        <div id="calcResult"></div>
+      </div>
+    </section>
+  </div>`;
+}
+
+/* ============ VIEW: ADMIN ============ */
+const TIME_OF_DAY = ['Morning','Afternoon','Evening','Night'];
+const PROJECTIONS = ['Intimate','Moderate','Strong'];
+const LONGEVITIES = ['2-4h','4-6h','6-8h','8-10h','10h+'];
+let adminRemoveConfirmId = null;
+
+function renderAdmin(){
+  if(!unlocked) return renderAdminLock();
+  const flash = window.__adminFlash; window.__adminFlash = null;
+  const changed = overrides.added.length || overrides.removedIds.length;
+  return `
+  <div class="wrap">
+    <section>
+      <div class="section-head reveal-io">
+        <h2>Admin</h2>
+        <p>Add a fragrance to the collection or remove one. Changes apply everywhere immediately and are saved to this browser.</p>
+      </div>
+      ${flash ? `<div class="admin-flash reveal-io">${ICONS.check}<span>${esc(flash)}</span></div>` : ''}
+      <div class="admin-actions reveal-io" style="--d:1">
+        <button class="btn btn-ghost btn-sm" id="adminLockBtn">Lock admin</button>
+        ${changed ? `<button class="btn btn-ghost btn-sm" id="adminResetBtn">Reset all changes</button>` : ''}
+        <span class="admin-status">${overrides.added.length} added · ${overrides.removedIds.length} removed from the original ${BASE_DATA.length}</span>
+      </div>
+      <div class="admin-grid">
+        <div class="admin-panel reveal-io" style="--d:2">
+          <h3>Add a fragrance</h3>
+          <form id="addForm">
+            <div class="field"><label>Name*</label><input type="text" name="name" required placeholder="e.g. Midnight Bloom" /></div>
+            <div class="field"><label>Brand*</label><input type="text" name="brand" required placeholder="e.g. Aoera" /></div>
+            <div class="field"><label>Olfactory family*</label><input type="text" name="olfactoryFamily" required placeholder="e.g. Woody Amber" /></div>
+            <div class="field-row">
+              <div class="field"><label>Top notes*</label><input type="text" name="topNotes" required placeholder="Bergamot, Pink Pepper" /></div>
+              <div class="field"><label>Heart notes</label><input type="text" name="middleNotes" placeholder="Rose, Jasmine" /></div>
+              <div class="field"><label>Base notes</label><input type="text" name="baseNotes" placeholder="Musk, Cedarwood" /></div>
+            </div>
+            <div class="field"><label>Mood</label><input type="text" name="mood" placeholder="Sophisticated, Romantic" /></div>
+            <div class="check-group"><label>Season</label><div class="check-row">${SEASONS.map(s=>`<label class="check-pill"><input type="checkbox" name="season" value="${esc(s)}" />${esc(s)}</label>`).join('')}</div></div>
+            <div class="check-group"><label>Time of day</label><div class="check-row">${TIME_OF_DAY.map(s=>`<label class="check-pill"><input type="checkbox" name="timeOfDay" value="${esc(s)}" />${esc(s)}</label>`).join('')}</div></div>
+            <div class="check-group"><label>Occasion</label><div class="check-row">${OCCASIONS_FULL.map(s=>`<label class="check-pill"><input type="checkbox" name="occasion" value="${esc(s)}" />${esc(s)}</label>`).join('')}</div></div>
+            <div class="field-row">
+              <div class="field"><label>Projection</label><select name="projection">${PROJECTIONS.map(p=>`<option ${p==='Moderate'?'selected':''}>${esc(p)}</option>`).join('')}</select></div>
+              <div class="field"><label>Longevity</label><select name="longevity">${LONGEVITIES.map(l=>`<option ${l==='6-8h'?'selected':''}>${esc(l)}</option>`).join('')}</select></div>
+            </div>
+            <div class="field"><label>Personal notes</label><textarea name="personalNotes" rows="2" placeholder="Optional"></textarea></div>
+            <div class="form-error" id="addFormError" hidden></div>
+            <button class="btn btn-primary" type="submit" data-magnetic>Add to collection</button>
+          </form>
+        </div>
+        <div class="admin-panel reveal-io" style="--d:3">
+          <h3>Remove a fragrance</h3>
+          <div class="search-field"><input type="text" id="adminSearch" placeholder="Search by name or brand" /></div>
+          <div class="admin-list" id="adminList">${renderAdminList('')}</div>
+        </div>
+      </div>
+    </section>
+  </div>`;
+}
+function renderAdminLock(){
+  return `
+  <div class="wrap">
+    <section>
+      <div class="section-head reveal-io">
+        <h2>Admin</h2>
+        <p>Enter the password to add or remove fragrances from the collection.</p>
+      </div>
+      <div class="admin-lock reveal-io" style="--d:1">
+        <div class="field"><label>Password</label><input type="password" id="adminPassword" placeholder="Enter password" /></div>
+        <button class="btn btn-primary" id="adminUnlockBtn" data-magnetic>Unlock</button>
+        <p class="admin-error" id="adminError" hidden>Incorrect password.</p>
+      </div>
+    </section>
+  </div>`;
+}
+function renderAdminList(query){
+  const q = query.trim().toLowerCase();
+  const list = [...DATA].filter(d=> !q || (d.name+' '+d.brand).toLowerCase().includes(q))
+    .sort((a,b)=>a.label.localeCompare(b.label));
+  if(!list.length) return emptyState('No fragrance matches that search.');
+  return list.map(d=>`
+    <div class="admin-row">
+      <div><strong>${esc(d.name)}</strong><span class="admin-row-brand">${esc(d.brand)}</span></div>
+      <button class="btn btn-sm ${adminRemoveConfirmId===d.id ? 'btn-primary' : 'btn-ghost'}" data-remove="${d.id}">${adminRemoveConfirmId===d.id ? 'Confirm remove' : 'Remove'}</button>
+    </div>`).join('');
+}
+function removeFragrance(id){
+  id = Number(id);
+  if(id >= NEXT_ID_BASE){
+    overrides.added = overrides.added.filter(d=>d.id!==id);
+  } else {
+    overrides.removedIds.push(id);
+  }
+  saveOverrides();
+  rebuildData();
+}
+function addFragrance(fields){
+  const nextId = NEXT_ID_BASE + overrides.added.length;
+  const item = {
+    id: nextId,
+    name: fields.name.trim(),
+    brand: fields.brand.trim(),
+    olfactoryFamily: fields.olfactoryFamily.trim(),
+    topNotes: fields.topNotes.split(',').map(s=>s.trim()).filter(Boolean),
+    middleNotes: fields.middleNotes.split(',').map(s=>s.trim()).filter(Boolean),
+    baseNotes: fields.baseNotes.split(',').map(s=>s.trim()).filter(Boolean),
+    season: fields.season,
+    timeOfDay: fields.timeOfDay,
+    occasion: fields.occasion,
+    projection: fields.projection,
+    longevity: fields.longevity,
+    mood: fields.mood.split(',').map(s=>s.trim()).filter(Boolean),
+    personalNotes: fields.personalNotes.trim(),
+    rating: 0,
+    layeringPartners: [],
+    layeringRestrictions: [],
+  };
+  overrides.added.push(item);
+  saveOverrides();
+  rebuildData();
+  return item;
+}
+
+/* ============ LAYERING ANALYSIS ENGINE ============ */
+/* Notes are grouped into broad accord families (perfumery-standard groupings),
+   then two fragrances are scored by how their families interact, backed up by
+   any explicitly recorded partner/restriction pairs from the collection data. */
+const NOTE_CATEGORIES = [
+  ['citrus', ['bergamot','lemon','lime','mandarin','orange','grapefruit','yuzu','citrus','neroli','petitgrain']],
+  ['aquatic', ['marine','sea salt','sea ','ozonic','aquatic','driftwood','water lily','rain']],
+  ['green', ['green','galbanum','fig leaf','grass','violet leaf','basil','mint','thyme','rosemary','sage','lavender','herbal']],
+  ['floral', ['rose','jasmine','lily','muguet','orange blossom','peony','tuberose','ylang','magnolia','heliotrope','freesia','floral','geranium','lilac','mimosa','osmanthus','orchid']],
+  ['fruity', ['apple','pear','peach','berry','cassis','raspberry','passion fruit','fig','plum','apricot','coconut','pineapple','mango','fruit','melon','banana','cherry','pomegranate','lychee']],
+  ['spicy', ['pepper','cardamom','clove','cinnamon','ginger','nutmeg','saffron','anise','spice','chili','coriander','pink pepper']],
+  ['woody', ['sandalwood','cedarwood','cedar','vetiver','patchouli','oud','agarwood','wood','oakmoss','pine','vetyver']],
+  ['amber', ['amber','benzoin','labdanum','vanilla','tonka','balsam','myrrh','resin']],
+  ['musk', ['musk','ambrette','ambergris']],
+  ['gourmand', ['chocolate','caramel','coffee','honey','praline','cocoa','sugar','milk','almond','gourmand','cream','biscuit','marshmallow','tea']],
+  ['smoky', ['leather','smoke','tobacco','birch tar','incense','suede','tar']],
+  ['powdery', ['iris','orris','powder','violet']],
+];
+function categorize(note){
+  const n = note.toLowerCase();
+  for(const [cat, kws] of NOTE_CATEGORIES){ if(kws.some(k=>n.includes(k))) return cat; }
+  return 'other';
+}
+/* pairwise affinity between accord families, -2 (clash) to +2 (classic combo). unlisted pairs default to 0 (neutral). */
+const AFFINITY_PAIRS = [
+  ['citrus','woody',2],['citrus','aquatic',1],['citrus','floral',1],['citrus','spicy',1],['citrus','green',1],
+  ['citrus','smoky',-1],['citrus','powdery',-1],['citrus','gourmand',-1],
+  ['floral','musk',2],['floral','woody',2],['floral','amber',1],['floral','green',1],['floral','fruity',1],
+  ['floral','smoky',-1],['floral','powdery',1],
+  ['woody','amber',2],['woody','spicy',2],['woody','musk',2],['woody','smoky',1],['woody','gourmand',1],['woody','green',1],['woody','powdery',1],
+  ['amber','gourmand',2],['amber','spicy',2],['amber','smoky',1],['amber','musk',2],
+  ['spicy','gourmand',1],['spicy','smoky',1],
+  ['musk','gourmand',1],['musk','powdery',1],['musk','fruity',1],
+  ['aquatic','green',1],['aquatic','woody',1],['aquatic','amber',-1],['aquatic','gourmand',-1],['aquatic','smoky',-1],
+  ['green','woody',1],['green','spicy',1],
+  ['fruity','musk',1],['fruity','gourmand',1],['fruity','smoky',-1],['fruity','woody',1],
+  ['smoky','gourmand',0],['smoky','amber',1],
+  ['gourmand','powdery',0],
+];
+const AFF = {};
+AFFINITY_PAIRS.forEach(([a,b,s])=>{ AFF[a+'|'+b]=s; AFF[b+'|'+a]=s; });
+const SELF_AFF = {citrus:1,aquatic:1,green:1,floral:1,fruity:1,spicy:0,woody:1,amber:0,musk:1,gourmand:0,smoky:0,powdery:1,other:0};
+function affinity(c1,c2){ if(c1==='other'||c2==='other') return 0; if(c1===c2) return SELF_AFF[c1]||0; return AFF[c1+'|'+c2] ?? 0; }
+
+const HEAVY_CATS = new Set(['woody','amber','musk','gourmand','smoky']);
+const PROJ_W = {Intimate:0.85, Moderate:1, Strong:1.25};
+
+function profileVector(d){
+  const weights = {top:1, mid:1.25, base:1.6};
+  const vec = {};
+  let total = 0;
+  d.topNotes.forEach(n=>{ const c=categorize(n); vec[c]=(vec[c]||0)+weights.top; total+=weights.top; });
+  d.middleNotes.forEach(n=>{ const c=categorize(n); vec[c]=(vec[c]||0)+weights.mid; total+=weights.mid; });
+  d.baseNotes.forEach(n=>{ const c=categorize(n); vec[c]=(vec[c]||0)+weights.base; total+=weights.base; });
+  if(total>0) Object.keys(vec).forEach(k=>vec[k]/=total);
+  return vec;
+}
+function weightScore(d){
+  const vec = profileVector(d);
+  let heavy = 0;
+  Object.entries(vec).forEach(([c,w])=>{ if(HEAVY_CATS.has(c)) heavy += w; });
+  const noteBulk = d.topNotes.length*0.6 + d.middleNotes.length*1 + d.baseNotes.length*1.5;
+  return (heavy*10 + noteBulk) * (PROJ_W[d.projection] || 1);
+}
+function dominantCats(d, n){
+  const vec = profileVector(d);
+  return Object.entries(vec).filter(([c])=>c!=='other').sort((a,b)=>b[1]-a[1]).slice(0,n||2).map(e=>e[0]);
+}
+const CAT_LABEL = {citrus:'citrus',aquatic:'aquatic',green:'green',floral:'floral',fruity:'fruity',spicy:'spicy',woody:'woody',amber:'amber',musk:'musk',gourmand:'gourmand',smoky:'smoky-leather',powdery:'powdery'};
+
+function analyzePairing(a, b){
+  const A = DATA.find(d=>d.label===a), B = DATA.find(d=>d.label===b);
+  if(!A||!B) return null;
+  const vecA = profileVector(A), vecB = profileVector(B);
+  /* weighted-average affinity across the two accord profiles; since each vector
+     sums to 1, this stays bounded to roughly the affinity table's own -2..2 range */
+  let vectorScore = 0;
+  Object.entries(vecA).forEach(([c1,w1])=>{
+    Object.entries(vecB).forEach(([c2,w2])=>{ vectorScore += w1*w2*affinity(c1,c2); });
+  });
+
+  const allA = [...A.topNotes,...A.middleNotes,...A.baseNotes].map(n=>n.toLowerCase());
+  const allB = [...B.topNotes,...B.middleNotes,...B.baseNotes].map(n=>n.toLowerCase());
+  const sharedNotes = [...new Set(allA.filter(n=>allB.includes(n)))];
+  const sharedBonus = Math.min(sharedNotes.length, 3) * 0.35;
+
+  const explicitPartner = A.layeringPartners.includes(b) || B.layeringPartners.includes(a);
+  const explicitRestrict = A.layeringRestrictions.includes(b) || B.layeringRestrictions.includes(a);
+  const familyBonus = A.olfactoryFamily===B.olfactoryFamily ? 0.3 : 0;
+
+  const total = vectorScore + sharedBonus + familyBonus;
+
+  /* explicit records from the collection are ground truth: they override the computed score */
+  let verdict;
+  if(explicitRestrict) verdict = 'avoid';
+  else if(explicitPartner) verdict = 'good';
+  else if(total >= 1.05) verdict = 'good';
+  else if(total >= 0.25) verdict = 'okay';
+  else verdict = 'avoid';
+
+  /* occasion scoring */
+  const MOOD_OCC = {
+    Formal: ['Sophisticated','Elegant','Classy','Mysterious'],
+    Date: ['Romantic','Seductive','Sexy','Intimate'],
+    Casual: ['Relaxed','Happy','Cozy','Comfortable','Uplifting'],
+    Office: ['Sophisticated','Classy','Clean'],
+    Outdoor: ['Energetic','Uplifting','Fresh'],
+    'Night Out': ['Mysterious','Seductive','Bold'],
+    Sport: ['Energetic','Fresh'],
+  };
+  const moods = [...A.mood, ...B.mood];
+  const occScores = OCCASIONS_FULL.map(occ=>{
+    let s = (A.occasion.includes(occ)?1.2:0) + (B.occasion.includes(occ)?1.2:0);
+    (MOOD_OCC[occ]||[]).forEach(m=>{ if(moods.some(x=>x.toLowerCase()===m.toLowerCase())) s += 0.5; });
+    return [occ, s];
+  }).sort((x,y)=>y[1]-x[1]);
+  let bestOccasions = occScores.filter(([,s])=>s>0).slice(0,2).map(([o])=>o);
+  if(!bestOccasions.length) bestOccasions = ['Casual'];
+
+  /* wearing order, tuned generous for someone who loves overspraying */
+  const wA = weightScore(A), wB = weightScore(B);
+  const foundation = wA >= wB ? A : B;
+  const topLayer = wA >= wB ? B : A;
+  const foundationSprays = foundation.projection==='Strong' ? 3 : 4;
+  const topSprays = topLayer.projection==='Strong' ? 3 : 4;
+
+  /* third bottle suggestion */
+  let hint = null, hintReason = '';
+  const explicitHint = DATA.find(d=>d.label!==a && d.label!==b &&
+    ((A.layeringPartners.includes(d.label) && B.layeringPartners.includes(d.label))));
+  if(explicitHint){
+    hint = explicitHint;
+    hintReason = `Already recorded as a layering partner for both ${A.name} and ${B.name}.`;
+  } else {
+    const single = DATA.find(d=>d.label!==a && d.label!==b &&
+      !A.layeringRestrictions.includes(d.label) && !B.layeringRestrictions.includes(d.label) &&
+      (A.layeringPartners.includes(d.label) || B.layeringPartners.includes(d.label)));
+    if(single){
+      hint = single;
+      const forWhom = A.layeringPartners.includes(single.label) ? A.name : B.name;
+      hintReason = `Recorded as a layering partner for ${forWhom}, and its ${dominantCats(single,1)[0] ? CAT_LABEL[dominantCats(single,1)[0]] : 'profile'} character bridges the blend.`;
+    } else {
+      const combined = {};
+      Object.entries(vecA).forEach(([c,w])=>combined[c]=(combined[c]||0)+w/2);
+      Object.entries(vecB).forEach(([c,w])=>combined[c]=(combined[c]||0)+w/2);
+      let best=null, bestScore=-Infinity;
+      DATA.forEach(d=>{
+        if(d.label===a || d.label===b) return;
+        if(A.layeringRestrictions.includes(d.label) || B.layeringRestrictions.includes(d.label)) return;
+        const vc = profileVector(d);
+        let s=0;
+        Object.entries(combined).forEach(([c1,w1])=>{ Object.entries(vc).forEach(([c2,w2])=>{ s += w1*w2*affinity(c1,c2); }); });
+        if(s>bestScore){ bestScore=s; best=d; }
+      });
+      hint = best;
+      hintReason = best ? `Its ${dominantCats(best,1)[0] ? CAT_LABEL[dominantCats(best,1)[0]] : 'profile'} accord sits close to what this pairing is already doing, so it extends the blend rather than fighting it.` : '';
+    }
+  }
+
+  return { A, B, verdict, vectorScore, sharedNotes, explicitPartner, explicitRestrict,
+    domA: dominantCats(A,2), domB: dominantCats(B,2), bestOccasions,
+    foundation, topLayer, foundationSprays, topSprays, hint, hintReason };
+}
+const OCCASIONS_FULL = ['Formal','Date','Casual','Office','Outdoor','Night Out','Sport'];
+
+function titleCase(s){ return s.replace(/\w\S*/g, t=>t[0].toUpperCase()+t.slice(1)); }
+
+function reasonLine(res){
+  const {A,B,verdict,domA,domB,sharedNotes,explicitPartner,explicitRestrict} = res;
+  const a0 = CAT_LABEL[domA[0]] || 'layered', b0 = CAT_LABEL[domB[0]] || 'layered';
+  let s;
+  if(explicitRestrict){
+    s = `${A.name} and ${B.name} are flagged as a restriction in the collection notes. The ${a0} side of ${A.name} tends to fight the ${b0} side of ${B.name} rather than blend with it.`;
+  } else if(explicitPartner){
+    s = `${A.name} and ${B.name} are already recorded as layering partners. The ${a0} character of ${A.name} and the ${b0} character of ${B.name} sit naturally together.`;
+  } else if(verdict==='good'){
+    s = `${A.name}'s ${a0} accord and ${B.name}'s ${b0} accord are a classic combination. They build on each other instead of competing for attention.`;
+  } else if(verdict==='okay'){
+    s = `${A.name}'s ${a0} accord and ${B.name}'s ${b0} accord don't clash, but there isn't much chemistry either. More coexistence than blend.`;
+  } else {
+    s = `${A.name}'s ${a0} accord and ${B.name}'s ${b0} accord pull in different directions. Worn together they're more likely to read as muddled than intentional.`;
+  }
+  if(sharedNotes.length){ s += ` Both carry ${sharedNotes.slice(0,2).map(titleCase).join(' and ')}, which helps tie them together.`; }
+  return s;
+}
+
+function renderAnalysis(res){
+  if(!res) return '';
+  const verdictMeta = {
+    good: {label:'Good pairing', cls:'partner', icon:ICONS.check},
+    okay: {label:'Just okay', cls:'neutral', icon:ICONS.chevron},
+    avoid:{label:'Avoid this pairing', cls:'restrict', icon:ICONS.x},
+  }[res.verdict];
+
+  if(res.verdict === 'avoid'){
+    return `
+    <div class="analysis pop-in">
+      <div class="analysis-verdict ${verdictMeta.cls}">
+        <span class="av-icon">${verdictMeta.icon}</span>
+        <div>
+          <div class="av-label">${esc(verdictMeta.label)}</div>
+          <p class="av-reason">${esc(reasonLine(res))}</p>
+        </div>
+      </div>
+      <div class="analysis-grid">
+        <div class="ai-block">
+          <div class="eyebrow">${esc(res.A.name)} wears best for</div>
+          <div class="ai-pills">${(res.A.occasion.length?res.A.occasion:['Casual']).slice(0,3).map(o=>`<span class="tag">${esc(o)}</span>`).join('')}</div>
+        </div>
+        <div class="ai-block">
+          <div class="eyebrow">${esc(res.B.name)} wears best for</div>
+          <div class="ai-pills">${(res.B.occasion.length?res.B.occasion:['Casual']).slice(0,3).map(o=>`<span class="tag">${esc(o)}</span>`).join('')}</div>
+        </div>
+        <div class="ai-block">
+          <div class="eyebrow">Instead</div>
+          <p>Keep these on separate days. ${res.hint ? `If you want to layer either of them, <strong>${esc(res.hint.brand)} ${esc(res.hint.name)}</strong> is a safer match, its profile does not fight either one.` : 'Reach for one at a time until a better match turns up.'}</p>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  return `
+  <div class="analysis pop-in">
+    <div class="analysis-verdict ${verdictMeta.cls}">
+      <span class="av-icon">${verdictMeta.icon}</span>
+      <div>
+        <div class="av-label">${esc(verdictMeta.label)}</div>
+        <p class="av-reason">${esc(reasonLine(res))}</p>
+      </div>
+    </div>
+    <div class="analysis-grid">
+      <div class="ai-block">
+        <div class="eyebrow">Best worn for</div>
+        <div class="ai-pills">${res.bestOccasions.map(o=>`<span class="tag">${esc(o)}</span>`).join('')}</div>
+      </div>
+      <div class="ai-block">
+        <div class="eyebrow">How to layer it</div>
+        <p>Spray ${res.foundationSprays} generous sprays of <strong>${esc(res.foundation.name)}</strong> across your chest and forearms first. It's the heavier of the two, so it needs to settle in as the base. Wait two or three minutes, then layer ${res.topSprays} sprays of <strong>${esc(res.topLayer.name)}</strong> on your neck and wrists so its opening notes sit on top of the blend rather than under it.</p>
+      </div>
+      ${res.hint ? `<div class="ai-block">
+        <div class="eyebrow">Round it out</div>
+        <p>Add <strong>${esc(res.hint.brand)} ${esc(res.hint.name)}</strong> to the mix. ${esc(res.hintReason)}</p>
+      </div>` : ''}
+    </div>
+  </div>`;
+}
+
+/* ============ DRAWER ============ */
+function drawerContent(d){
+  const tier = (label, notes) => notes && notes.length ? `<div class="pyramid-tier"><div class="eyebrow">${label}</div><div class="pyramid-notes">${notes.map(n=>`<span class="tag">${esc(n)}</span>`).join('')}</div></div>` : '';
+  const partners = d.layeringPartners.length ? d.layeringPartners.map(p=>`<div class="layer-row">${ICONS.check} ${esc(p)}</div>`).join('') : `<div class="layer-row">None recorded</div>`;
+  const restricts = d.layeringRestrictions.length ? d.layeringRestrictions.map(p=>`<div class="layer-row restrict">${ICONS.x} ${esc(p)}</div>`).join('') : `<div class="layer-row">None recorded</div>`;
+  return `
+    <div class="drawer-head">
+      <div>
+        <div class="eyebrow">${esc(d.brand)}</div>
+        <h3>${esc(d.name)}</h3>
+      </div>
+      <button class="icon-btn" id="drawerClose">${ICONS.close}</button>
+    </div>
+    <div class="drawer-body">
+      <div class="tag">${esc(d.olfactoryFamily)}</div>
+      <div class="pyramid">
+        ${tier('Top notes', d.topNotes)}
+        ${tier('Heart notes', d.middleNotes)}
+        ${tier('Base notes', d.baseNotes)}
+      </div>
+      <div class="meta-grid">
+        <div class="meta-item"><div class="eyebrow">Season</div><div>${d.season.join(', ')||'-'}</div></div>
+        <div class="meta-item"><div class="eyebrow">Occasion</div><div>${d.occasion.join(', ')||'-'}</div></div>
+        <div class="meta-item"><div class="eyebrow">Mood</div><div>${d.mood.join(', ')||'-'}</div></div>
+        <div class="meta-item"><div class="eyebrow">Time of day</div><div>${d.timeOfDay.join(', ')||'-'}</div></div>
+        <div class="meta-item"><div class="eyebrow">Projection</div><div>${esc(d.projection||'-')}</div></div>
+        <div class="meta-item"><div class="eyebrow">Longevity</div><div>${esc(d.longevity||'-')}</div></div>
+      </div>
+      <div class="eyebrow">Layering partners</div>
+      <div class="layer-list">${partners}</div>
+      <div class="eyebrow" style="margin-top:1rem;">Layering restrictions</div>
+      <div class="layer-list">${restricts}</div>
+      <div class="eyebrow" style="margin-top:1rem;">Personal notes</div>
+      <p style="font-size:.9rem;color:var(--ink-muted);margin:.4rem 0 0;">${d.personalNotes ? esc(d.personalNotes) : 'No personal notes recorded yet.'}</p>
+    </div>`;
+}
+function openDrawer(id){
+  const d = DATA.find(x=>x.id===Number(id));
+  if(!d) return;
+  document.getElementById('drawer').innerHTML = drawerContent(d);
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('scrim').classList.add('open');
+  document.getElementById('drawerClose').addEventListener('click', closeDrawer);
+}
+function closeDrawer(){
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('scrim').classList.remove('open');
+}
+document.getElementById('scrim').addEventListener('click', closeDrawer);
+
+/* ============ EVENT BINDING (re-run after every render) ============ */
+/* ============ MOTION ENGINE ============ */
+const REDUCE_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+let io = null;
+
+function easeOutExpo(t){ return t===1 ? 1 : 1 - Math.pow(2, -10*t); }
+function runCountUp(el){
+  const target = Number(el.getAttribute('data-countup'));
+  if(REDUCE_MOTION || !isFinite(target)){ el.textContent = target; return; }
+  const dur = 900, start = performance.now();
+  function tick(now){
+    const p = Math.min(1, (now-start)/dur);
+    el.textContent = Math.round(target * easeOutExpo(p));
+    if(p<1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
+function initObservers(root){
+  if(io) io.disconnect();
+  if(REDUCE_MOTION){
+    root.querySelectorAll('.reveal-io').forEach(el=>el.classList.add('in-view'));
+    root.querySelectorAll('.bar-fill').forEach(el=>el.classList.add('in-view'));
+    root.querySelectorAll('[data-countup]').forEach(el=>{ el.textContent = el.getAttribute('data-countup'); });
+    return;
+  }
+  io = new IntersectionObserver((entries)=>{
+    entries.forEach(entry=>{
+      if(!entry.isIntersecting) return;
+      const el = entry.target;
+      if(el.classList.contains('reveal-io')) el.classList.add('in-view');
+      if(el.classList.contains('bar-fill')) el.classList.add('in-view');
+      if(el.hasAttribute('data-countup')) runCountUp(el);
+      io.unobserve(el);
+    });
+  }, { threshold: 0.15, rootMargin: '0px 0px -8% 0px' });
+  root.querySelectorAll('.reveal-io, .bar-fill, [data-countup]').forEach(el=>io.observe(el));
+}
+
+/* tilt + spotlight, delegated so it survives re-renders without rebinding */
+if(!REDUCE_MOTION){
+  document.addEventListener('pointermove', (e)=>{
+    const el = e.target.closest && e.target.closest('[data-tilt]');
+    if(!el) return;
+    const r = el.getBoundingClientRect();
+    const px = (e.clientX - r.left) / r.width, py = (e.clientY - r.top) / r.height;
+    el.style.setProperty('--mx', (px*100).toFixed(1) + '%');
+    el.style.setProperty('--my', (py*100).toFixed(1) + '%');
+    el.style.setProperty('--ry', ((px-0.5) * 6).toFixed(2) + 'deg');
+    el.style.setProperty('--rx', ((0.5-py) * 6).toFixed(2) + 'deg');
+  }, { passive:true });
+  document.addEventListener('pointerleave', (e)=>{
+    const el = e.target.closest && e.target.closest('[data-tilt]');
+    if(!el) return;
+    el.style.setProperty('--rx','0deg'); el.style.setProperty('--ry','0deg');
+  }, true);
+
+  /* magnetic buttons */
+  document.addEventListener('pointermove', (e)=>{
+    const el = e.target.closest && e.target.closest('[data-magnetic]');
+    if(!el) return;
+    const r = el.getBoundingClientRect();
+    const mx = (e.clientX - (r.left+r.width/2)) * 0.28;
+    const my = (e.clientY - (r.top+r.height/2)) * 0.28;
+    el.style.transform = `translate(${mx.toFixed(1)}px, ${my.toFixed(1)}px)`;
+  }, { passive:true });
+  document.addEventListener('pointerleave', (e)=>{
+    const el = e.target.closest && e.target.closest('[data-magnetic]');
+    if(!el) return;
+    el.style.transform = '';
+  }, true);
+}
+
+function bindMain(){
+  const main = document.getElementById('main');
+  initObservers(main);
+
+  main.querySelectorAll('[data-open]').forEach(el=>{
+    el.addEventListener('click', e=>{ e.preventDefault(); openDrawer(el.getAttribute('data-open')); });
+  });
+
+  const s = document.getElementById('searchInput');
+  if(s){ s.addEventListener('input', ()=>{ state.search = s.value; softRerenderCatalogue(); }); }
+
+  const map = {fBrand:'brand', fFamily:'family', fSeason:'season', fOccasion:'occasion', fMood:'mood'};
+  Object.entries(map).forEach(([id,key])=>{
+    const el = document.getElementById(id);
+    if(el){ el.addEventListener('change', ()=>{ state.filters[key]=el.value; render(); }); }
+  });
+  main.querySelectorAll('[data-clear]').forEach(el=>{
+    el.addEventListener('click', ()=>{ state.filters[el.getAttribute('data-clear')]=''; render(); });
+  });
+
+  main.querySelectorAll('[data-dim]').forEach(el=>{
+    el.addEventListener('click', ()=>{ state.explore.dim = el.getAttribute('data-dim'); state.explore.tag=null; render(); });
+  });
+  main.querySelectorAll('[data-tag]').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      const t = el.getAttribute('data-tag');
+      state.explore.tag = (state.explore.tag===t) ? null : t;
+      render();
+    });
+  });
+
+  const calcA = document.getElementById('calcA'), calcB = document.getElementById('calcB');
+  if(calcA && calcB){
+    const runCalc = ()=>{
+      const res = document.getElementById('calcResult');
+      if(!calcA.value || !calcB.value){ res.innerHTML=''; return; }
+      if(calcA.value === calcB.value){ res.innerHTML = `<div class="calc-result pop-in neutral">${ICONS.x}<span>Pick two different fragrances to analyse a pairing.</span></div>`; return; }
+      const analysis = analyzePairing(calcA.value, calcB.value);
+      res.innerHTML = renderAnalysis(analysis);
+    };
+    calcA.addEventListener('change', runCalc);
+    calcB.addEventListener('change', runCalc);
+  }
+
+  /* admin: unlock */
+  const pwField = document.getElementById('adminPassword');
+  const unlockBtn = document.getElementById('adminUnlockBtn');
+  if(unlockBtn && pwField){
+    const tryUnlock = ()=>{
+      if(pwField.value === ADMIN_PASSWORD){
+        unlocked = true;
+        try{ sessionStorage.setItem(UNLOCK_KEY,'1'); }catch(e){}
+        render();
+      } else {
+        const err = document.getElementById('adminError');
+        if(err) err.hidden = false;
+        pwField.value = '';
+        pwField.focus();
+      }
+    };
+    unlockBtn.addEventListener('click', tryUnlock);
+    pwField.addEventListener('keydown', e=>{ if(e.key==='Enter') tryUnlock(); });
+  }
+
+  /* admin: lock / reset */
+  const lockBtn = document.getElementById('adminLockBtn');
+  if(lockBtn){ lockBtn.addEventListener('click', ()=>{ unlocked=false; try{ sessionStorage.removeItem(UNLOCK_KEY); }catch(e){} render(); }); }
+  const resetBtn = document.getElementById('adminResetBtn');
+  if(resetBtn){ resetBtn.addEventListener('click', ()=>{
+    overrides = {added:[], removedIds:[]};
+    saveOverrides(); rebuildData(); adminRemoveConfirmId=null; render();
+  }); }
+
+  /* admin: add fragrance */
+  const addForm = document.getElementById('addForm');
+  if(addForm){
+    addForm.addEventListener('submit', e=>{
+      e.preventDefault();
+      const errEl = document.getElementById('addFormError');
+      const fd = new FormData(addForm);
+      const fields = {
+        name: fd.get('name')||'', brand: fd.get('brand')||'', olfactoryFamily: fd.get('olfactoryFamily')||'',
+        topNotes: fd.get('topNotes')||'', middleNotes: fd.get('middleNotes')||'', baseNotes: fd.get('baseNotes')||'',
+        mood: fd.get('mood')||'', personalNotes: fd.get('personalNotes')||'',
+        projection: fd.get('projection')||'Moderate', longevity: fd.get('longevity')||'6-8h',
+        season: fd.getAll('season'), timeOfDay: fd.getAll('timeOfDay'), occasion: fd.getAll('occasion'),
+      };
+      if(!fields.name.trim() || !fields.brand.trim() || !fields.olfactoryFamily.trim() || !fields.topNotes.trim()){
+        errEl.hidden = false; errEl.textContent = 'Name, brand, family and at least one top note are required.';
+        return;
+      }
+      const item = addFragrance(fields);
+      window.__adminFlash = `Added ${item.brand} - ${item.name} to the collection.`;
+      render();
+    });
+  }
+
+  /* admin: remove list + search */
+  const adminSearch = document.getElementById('adminSearch');
+  if(adminSearch){
+    adminSearch.addEventListener('input', ()=>{
+      document.getElementById('adminList').innerHTML = renderAdminList(adminSearch.value);
+      bindAdminList();
+    });
+  }
+  bindAdminList();
+}
+
+function bindAdminList(){
+  const list = document.getElementById('adminList');
+  if(!list) return;
+  list.querySelectorAll('[data-remove]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const id = Number(btn.getAttribute('data-remove'));
+      if(adminRemoveConfirmId === id){
+        removeFragrance(id);
+        adminRemoveConfirmId = null;
+        const search = document.getElementById('adminSearch');
+        list.innerHTML = renderAdminList(search ? search.value : '');
+        const statusEl = document.querySelector('.admin-status');
+        if(statusEl) statusEl.textContent = `${overrides.added.length} added · ${overrides.removedIds.length} removed from the original ${BASE_DATA.length}`;
+        bindAdminList();
+      } else {
+        adminRemoveConfirmId = id;
+        const search = document.getElementById('adminSearch');
+        list.innerHTML = renderAdminList(search ? search.value : '');
+        bindAdminList();
+      }
+    });
+  });
+}
+
+function softRerenderCatalogue(){
+  const results = DATA.filter(matchesFilters);
+  document.querySelector('.result-count').textContent = results.length + ' of ' + DATA.length;
+  const gridWrap = document.querySelector('.wrap:has(.grid), .wrap:has(.empty)');
+  if(gridWrap){
+    gridWrap.innerHTML = results.length ? `<div class="grid">${results.map((d,i)=>card(d,i)).join('')}</div>` : emptyState('No fragrance matches these filters. Try clearing one.');
+    bindMain();
+  }
+}
+
+/* ============ MOBILE NAV ============ */
+document.getElementById('hamburgerBtn').addEventListener('click', ()=>{
+  document.getElementById('mobileNav').classList.toggle('open');
+});
+
+/* ============ INIT ============ */
+if(!location.hash) location.hash = '#/home';
+render();
+</script>
+
