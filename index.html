@@ -177,6 +177,23 @@
     .fam-tile{grid-column:span 1 !important;grid-row:span 1 !important;}
   }
 
+  /* ---------- home menu grid ---------- */
+  .menu-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.9rem;}
+  .menu-tile{position:relative;border:1px solid var(--line);border-radius:var(--radius);padding:1.3rem 1.3rem 1.5rem;background:var(--surface);display:flex;flex-direction:column;gap:.5rem;min-height:150px;transition:border-color .25s ease, background .25s ease;}
+  .menu-tile:hover{border-color:var(--accent);background:var(--accent-soft);}
+  .menu-tile-n{font-family:var(--font-mono);font-size:.72rem;color:var(--ink-faint);}
+  .menu-tile-title{font-family:var(--font-display);font-size:1.15rem;font-style:italic;color:var(--ink);}
+  .menu-tile-desc{font-size:.82rem;color:var(--ink-muted);line-height:1.5;flex:1;}
+  .menu-tile-arrow{align-self:flex-end;color:var(--accent);}
+  .menu-tile-arrow svg{display:block;}
+  @media (max-width:860px){ .menu-grid{grid-template-columns:repeat(2,1fr);} }
+  @media (max-width:560px){ .menu-grid{grid-template-columns:1fr;} }
+
+  /* ---------- landing ---------- */
+  .landing-hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;}
+  .landing-hero .hero-grid{width:100%;}
+  .is-landing .topbar, .is-landing .footer{display:none;}
+
   /* ---------- cta band ---------- */
   .cta-band{background:var(--ink);color:var(--bg);border-radius:var(--radius);}
   :root[data-theme="dark"] .cta-band, @media (prefers-color-scheme:dark){ }
@@ -292,6 +309,17 @@
   .field select{width:100%;padding:.65rem .7rem;border:1px solid var(--line-strong);border-radius:var(--radius);background:var(--surface);}
   .calc-plus{color:var(--ink-faint);}
   @media (max-width:700px){.calc-row{grid-template-columns:1fr;}.calc-plus{justify-self:center;}}
+
+  /* ---------- today's layering ---------- */
+  .today-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:1.6rem;}
+  .today-meta{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1.1rem;}
+  .today-meta .tag{font-family:var(--font-mono);}
+  .today-pair-head{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;font-family:var(--font-display);font-size:clamp(1.15rem,2.2vw,1.45rem);font-style:italic;}
+  .today-pair-head .calc-plus{font-family:var(--font-body);font-style:normal;color:var(--ink-faint);}
+  .today-skel{display:flex;flex-direction:column;gap:.6rem;}
+  .skel-line{height:14px;border-radius:6px;background:linear-gradient(90deg, var(--surface-2) 25%, var(--line) 37%, var(--surface-2) 63%);background-size:400% 100%;animation:skelShine 1.4s ease-in-out infinite;}
+  .skel-tag{background:var(--surface-2);color:transparent;border-color:transparent;}
+  @keyframes skelShine{0%{background-position:100% 50%;}100%{background-position:0 50%;}}
 
   /* ---------- admin ---------- */
   .admin-lock{max-width:360px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:1.6rem;}
@@ -550,6 +578,7 @@ const state = {
 
 /* ============ ROUTER ============ */
 const routes = {
+  landing: renderLanding,
   home: renderHome,
   catalogue: renderCatalogue,
   brand: renderBrand,
@@ -572,6 +601,7 @@ function render(){
   });
   const adminBtn = document.getElementById('adminBtn');
   if(adminBtn) adminBtn.classList.toggle('active', route==='admin');
+  document.querySelector('.app').classList.toggle('is-landing', route==='landing');
   document.getElementById('main').innerHTML = routes[route]();
   document.getElementById('mobileNav').classList.remove('open');
   window.scrollTo({top:0});
@@ -626,16 +656,13 @@ function emptyState(msg){
   return `<div class="empty"><h3>Nothing here yet</h3><p>${esc(msg)}</p></div>`;
 }
 
-/* ============ VIEW: HOME ============ */
-function renderHome(){
-  const famCounts = countBy(DATA.map(d=>d.olfactoryFamily));
-  const top6 = topEntries(famCounts, 6);
+/* ============ VIEW: LANDING ============ */
+function renderLanding(){
   const sampleTags = DATA.filter((d,i)=>i%13===0).slice(0,5);
-
   const word = (w) => `<span class="word"><span>${esc(w)}</span></span>`;
 
   return `
-  <section class="hero band-dark">
+  <section class="hero band-dark landing-hero">
     <div class="wrap hero-grid">
       <div>
         <div class="hero-kicker reveal-io"><span class="hero-count" data-countup="${DATA.length}">0</span> fragrances in the collection</div>
@@ -645,8 +672,7 @@ function renderHome(){
         </h1>
         <p>Every bottle in the cabinet, catalogued by note, mood and season, so the right scent is never a guess.</p>
         <div class="hero-cta">
-          <a href="#/catalogue" class="btn btn-primary" data-magnetic>Browse the catalogue ${ICONS.arrow}</a>
-          <a href="#/layering" class="btn btn-ghost" data-magnetic>Layering calculator</a>
+          <a href="#/home" class="btn btn-primary" data-magnetic>Enter ${ICONS.arrow}</a>
         </div>
       </div>
       <div class="aura reveal d1" data-tilt>
@@ -668,6 +694,41 @@ function renderHome(){
         `).join('')}
       </div>
     </div>
+  </section>`;
+}
+
+/* ============ VIEW: HOME ============ */
+const MENU_TILES = [
+  {n:'01', title:'Catalogue', desc:'Browse every fragrance, filter by house, family, season or mood.', href:'#/catalogue'},
+  {n:'02', title:'By Brand', desc:'The collection grouped house by house.', href:'#/brand'},
+  {n:'03', title:'A to Z Index', desc:'Every fragrance, alphabetically.', href:'#/index'},
+  {n:'04', title:'Explore', desc:'Browse by mood, season, occasion or olfactory family.', href:'#/explore'},
+  {n:'05', title:'Statistics', desc:'A quantitative read on the collection as it stands today.', href:'#/stats'},
+  {n:'06', title:'Layering Calculator', desc:'Pick any two fragrances and read how they pair.', href:'#/layering'},
+];
+
+function renderHome(){
+  const famCounts = countBy(DATA.map(d=>d.olfactoryFamily));
+  const top6 = topEntries(famCounts, 6);
+
+  return `
+  <div class="wrap" style="padding-top:2.2rem;">
+    <div class="section-head reveal-io">
+      <h2>Home</h2>
+      <p>Today's pick, and every way into the rest of the library.</p>
+    </div>
+  </div>
+
+  <section class="todays-section">
+    <div class="wrap">
+      <div class="section-head reveal-io">
+        <h2>Today's layering</h2>
+        <p>Picked for right now, weighed against the day, the time, and the weather where you are.</p>
+      </div>
+      <div class="today-card reveal d1" id="todaysLayering">
+        ${todaysLayeringSkeleton()}
+      </div>
+    </div>
   </section>
 
   <div class="stat-strip">
@@ -682,6 +743,24 @@ function renderHome(){
   <section>
     <div class="wrap">
       <div class="section-head reveal-io">
+        <h2>Browse the collection</h2>
+        <p>Every way into the library, in one place.</p>
+      </div>
+      <div class="menu-grid">
+        ${MENU_TILES.map((t,i)=>`
+          <a class="menu-tile reveal-io" data-tilt style="--d:${i}" href="${t.href}">
+            <span class="menu-tile-n">${t.n}</span>
+            <span class="menu-tile-title">${esc(t.title)}</span>
+            <span class="menu-tile-desc">${esc(t.desc)}</span>
+            <span class="menu-tile-arrow">${ICONS.arrow}</span>
+          </a>`).join('')}
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="section-head reveal-io">
         <h2>Explore by family</h2>
         <p>The collection's dominant olfactory families, ranked by how often they appear.</p>
       </div>
@@ -691,17 +770,6 @@ function renderHome(){
             <span class="fam-name">${esc(fam)}</span>
             <span class="fam-count">${count} fragrance${count===1?'':'s'}</span>
           </a>`).join('')}
-      </div>
-    </div>
-  </section>
-
-  <section>
-    <div class="wrap">
-      <div class="cta-band reveal-io">
-        <div class="cta-band-inner">
-          <h2>Every note, cross-referenced.</h2>
-          <a href="#/layering" class="btn btn-primary" data-magnetic>Open the layering calculator</a>
-        </div>
       </div>
     </div>
   </section>
@@ -878,7 +946,11 @@ function renderStats(){
 
 /* ============ VIEW: LAYERING ============ */
 function renderLayering(){
-  const opts = [...DATA].sort((a,b)=>a.label.localeCompare(b.label)).map(d=>`<option value="${esc(d.label)}">${esc(d.label)}</option>`).join('');
+  const params = new URLSearchParams((location.hash.split('?')[1]||''));
+  const presetA = params.get('a') || '', presetB = params.get('b') || '';
+  const opts = (selected) => [...DATA].sort((a,b)=>a.label.localeCompare(b.label))
+    .map(d=>`<option value="${esc(d.label)}" ${d.label===selected?'selected':''}>${esc(d.label)}</option>`).join('');
+  const preResult = (presetA && presetB && presetA !== presetB) ? analyzePairing(presetA, presetB) : null;
   return `
   <div class="wrap">
     <section>
@@ -891,11 +963,11 @@ function renderLayering(){
       </div>
       <div class="calc-card reveal-io" style="--d:2">
         <div class="calc-row">
-          <div class="field"><label>First fragrance</label><select id="calcA"><option value="">Choose one</option>${opts}</select></div>
+          <div class="field"><label>First fragrance</label><select id="calcA"><option value="">Choose one</option>${opts(presetA)}</select></div>
           <span class="calc-plus">+</span>
-          <div class="field"><label>Second fragrance</label><select id="calcB"><option value="">Choose one</option>${opts}</select></div>
+          <div class="field"><label>Second fragrance</label><select id="calcB"><option value="">Choose one</option>${opts(presetB)}</select></div>
         </div>
-        <div id="calcResult"></div>
+        <div id="calcResult">${preResult ? renderAnalysis(preResult) : ''}</div>
       </div>
     </section>
   </div>`;
@@ -1148,36 +1220,46 @@ function analyzePairing(a, b){
   const foundationSprays = foundation.projection==='Strong' ? 3 : 4;
   const topSprays = topLayer.projection==='Strong' ? 3 : 4;
 
-  /* third bottle suggestion */
+  /* third bottle suggestion. score every eligible fragrance in the whole 88-piece collection
+     at once: curated layering-partner records earn a strong bonus (so a real recorded synergy
+     still tends to win), but the note-affinity math runs for everyone, and the pick is drawn
+     from the strongest handful rather than always the single top scorer. that keeps recorded
+     pairings meaningfully favoured while letting fragrances that were never explicitly logged
+     as anyone's partner still surface, instead of the same half-dozen "universal blenders"
+     winning almost every pairing. the seed comes from the pairing itself, so the same two
+     fragrances always land on the same hint, but different pairings spread across the shelf. */
+  const pickSeeded = (list, seedKey) => list[hashStr(seedKey) % list.length];
+  const combined = {};
+  Object.entries(vecA).forEach(([c,w])=>combined[c]=(combined[c]||0)+w/2);
+  Object.entries(vecB).forEach(([c,w])=>combined[c]=(combined[c]||0)+w/2);
+
+  const hintCandidates = [];
+  DATA.forEach(d=>{
+    if(d.label===a || d.label===b) return;
+    if(A.layeringRestrictions.includes(d.label) || B.layeringRestrictions.includes(d.label)) return;
+    const vc = profileVector(d);
+    let s = 0;
+    Object.entries(combined).forEach(([c1,w1])=>{ Object.entries(vc).forEach(([c2,w2])=>{ s += w1*w2*affinity(c1,c2); }); });
+    const bothPartner = A.layeringPartners.includes(d.label) && B.layeringPartners.includes(d.label);
+    const onePartner = !bothPartner && (A.layeringPartners.includes(d.label) || B.layeringPartners.includes(d.label));
+    if(bothPartner) s += 2.2;
+    else if(onePartner) s += 1;
+    hintCandidates.push({ d, s, bothPartner, onePartner });
+  });
+  hintCandidates.sort((x,y)=>y.s-x.s);
+  const hintPool = hintCandidates.slice(0, Math.min(10, hintCandidates.length));
+
   let hint = null, hintReason = '';
-  const explicitHint = DATA.find(d=>d.label!==a && d.label!==b &&
-    ((A.layeringPartners.includes(d.label) && B.layeringPartners.includes(d.label))));
-  if(explicitHint){
-    hint = explicitHint;
-    hintReason = `Already recorded as a layering partner for both ${A.name} and ${B.name}.`;
-  } else {
-    const single = DATA.find(d=>d.label!==a && d.label!==b &&
-      !A.layeringRestrictions.includes(d.label) && !B.layeringRestrictions.includes(d.label) &&
-      (A.layeringPartners.includes(d.label) || B.layeringPartners.includes(d.label)));
-    if(single){
-      hint = single;
-      const forWhom = A.layeringPartners.includes(single.label) ? A.name : B.name;
-      hintReason = `Recorded as a layering partner for ${forWhom}, and its ${dominantCats(single,1)[0] ? CAT_LABEL[dominantCats(single,1)[0]] : 'profile'} character bridges the blend.`;
+  if(hintPool.length){
+    const pick = pickSeeded(hintPool, a+'|'+b+'|hint');
+    hint = pick.d;
+    if(pick.bothPartner){
+      hintReason = `Already recorded as a layering partner for both ${A.name} and ${B.name}.`;
+    } else if(pick.onePartner){
+      const forWhom = A.layeringPartners.includes(pick.d.label) ? A.name : B.name;
+      hintReason = `Recorded as a layering partner for ${forWhom}, and its ${dominantCats(pick.d,1)[0] ? CAT_LABEL[dominantCats(pick.d,1)[0]] : 'profile'} character bridges the blend.`;
     } else {
-      const combined = {};
-      Object.entries(vecA).forEach(([c,w])=>combined[c]=(combined[c]||0)+w/2);
-      Object.entries(vecB).forEach(([c,w])=>combined[c]=(combined[c]||0)+w/2);
-      let best=null, bestScore=-Infinity;
-      DATA.forEach(d=>{
-        if(d.label===a || d.label===b) return;
-        if(A.layeringRestrictions.includes(d.label) || B.layeringRestrictions.includes(d.label)) return;
-        const vc = profileVector(d);
-        let s=0;
-        Object.entries(combined).forEach(([c1,w1])=>{ Object.entries(vc).forEach(([c2,w2])=>{ s += w1*w2*affinity(c1,c2); }); });
-        if(s>bestScore){ bestScore=s; best=d; }
-      });
-      hint = best;
-      hintReason = best ? `Its ${dominantCats(best,1)[0] ? CAT_LABEL[dominantCats(best,1)[0]] : 'profile'} accord sits close to what this pairing is already doing, so it extends the blend rather than fighting it.` : '';
+      hintReason = `Its ${dominantCats(pick.d,1)[0] ? CAT_LABEL[dominantCats(pick.d,1)[0]] : 'profile'} accord sits close to what this pairing is already doing, so it extends the blend rather than fighting it.`;
     }
   }
 
@@ -1267,6 +1349,206 @@ function renderAnalysis(res){
       </div>` : ''}
     </div>
   </div>`;
+}
+
+/* ============ TODAY'S LAYERING ENGINE ============ */
+const WEATHER_CACHE_KEY = 'scentledger_weather_v1';
+function todayKey(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+
+function loadWeatherCache(){
+  try{
+    const raw = localStorage.getItem(WEATHER_CACHE_KEY);
+    if(!raw) return null;
+    const obj = JSON.parse(raw);
+    if(obj.day !== todayKey()) return null;
+    return obj;
+  }catch(e){ return null; }
+}
+function saveWeatherCache(obj){
+  try{ localStorage.setItem(WEATHER_CACHE_KEY, JSON.stringify(Object.assign({}, obj, {day: todayKey()}))); }catch(e){}
+}
+
+/* WMO weather codes -> plain label + broad condition bucket */
+const WEATHER_CODES = {
+  0:['Clear sky','clear'], 1:['Mostly clear','clear'], 2:['Partly cloudy','cloudy'], 3:['Overcast','cloudy'],
+  45:['Foggy','foggy'], 48:['Foggy','foggy'],
+  51:['Light drizzle','rainy'], 53:['Drizzle','rainy'], 55:['Dense drizzle','rainy'],
+  56:['Freezing drizzle','rainy'], 57:['Freezing drizzle','rainy'],
+  61:['Light rain','rainy'], 63:['Rain','rainy'], 65:['Heavy rain','rainy'],
+  66:['Freezing rain','rainy'], 67:['Freezing rain','rainy'],
+  71:['Light snow','snowy'], 73:['Snow','snowy'], 75:['Heavy snow','snowy'], 77:['Snow grains','snowy'],
+  80:['Rain showers','rainy'], 81:['Rain showers','rainy'], 82:['Violent showers','rainy'],
+  85:['Snow showers','snowy'], 86:['Snow showers','snowy'],
+  95:['Thunderstorm','stormy'], 96:['Thunderstorm, hail','stormy'], 99:['Thunderstorm, hail','stormy'],
+};
+function weatherCodeInfo(code){ return WEATHER_CODES[code] || ['Unsettled weather','cloudy']; }
+
+function fetchWeather(){
+  return new Promise((resolve)=>{
+    const cached = loadWeatherCache();
+    if(cached){ resolve(cached); return; }
+    if(!('geolocation' in navigator) || !window.fetch){ resolve(null); return; }
+    let done = false;
+    const finish = (val)=>{ if(done) return; done = true; resolve(val); };
+    const timer = setTimeout(()=>finish(null), 6500);
+    navigator.geolocation.getCurrentPosition(
+      (pos)=>{
+        const {latitude, longitude} = pos.coords;
+        const url = 'https://api.open-meteo.com/v1/forecast?latitude='+latitude+'&longitude='+longitude+'&current=temperature_2m,weather_code&timezone=auto';
+        fetch(url).then(r=>{ if(!r.ok) throw new Error('bad response'); return r.json(); })
+          .then(j=>{
+            clearTimeout(timer);
+            const result = { temp: j.current.temperature_2m, code: j.current.weather_code, source:'live' };
+            saveWeatherCache(result);
+            finish(result);
+          })
+          .catch(()=>{ clearTimeout(timer); finish(null); });
+      },
+      ()=>{ clearTimeout(timer); finish(null); },
+      { timeout: 6000, maximumAge: 3600000 }
+    );
+  });
+}
+
+/* map live temperature + condition (or, lacking that, just the calendar) onto the
+   collection's existing season/accord vocabulary so scoring can reuse profileVector */
+function climateBucket(temp, cond){
+  if(cond==='rainy' || cond==='stormy') return { season:'Fall', prefer:['woody','amber','spicy','gourmand','musk'] };
+  if(cond==='snowy') return { season:'Winter', prefer:['amber','woody','musk','spicy'] };
+  if(temp==null){
+    const m = new Date().getMonth();
+    if(m===11||m===0||m===1) return { season:'Winter', prefer:['amber','woody','musk','spicy'] };
+    if(m>=2&&m<=4) return { season:'Spring', prefer:['floral','citrus','green','fruity'] };
+    if(m>=5&&m<=7) return { season:'Summer', prefer:['citrus','aquatic','green','fruity'] };
+    return { season:'Fall', prefer:['woody','spicy','amber'] };
+  }
+  if(temp>=29) return { season:'Summer', prefer:['citrus','aquatic','green','fruity'] };
+  if(temp>=23) return { season:'Spring', prefer:['floral','citrus','green','fruity'] };
+  if(temp>=17) return { season:'Fall', prefer:['woody','spicy','amber'] };
+  return { season:'Winter', prefer:['amber','woody','musk','spicy'] };
+}
+
+function dayTypeAndTime(){
+  const now = new Date();
+  const day = now.getDay();
+  const hour = now.getHours();
+  const isWeekend = (day===0 || day===6);
+  let timeOfDay;
+  if(hour<11) timeOfDay='Morning';
+  else if(hour<15) timeOfDay='Afternoon';
+  else if(hour<19) timeOfDay='Evening';
+  else timeOfDay='Night';
+  return { isWeekend, timeOfDay, dayName: now.toLocaleDateString(undefined,{weekday:'long'}) };
+}
+
+function fragranceClimateFit(d, bucket, ctx){
+  const vec = profileVector(d);
+  let score = 0;
+  bucket.prefer.forEach((cat,i)=>{ score += (vec[cat]||0) * (bucket.prefer.length - i); });
+  if(d.season && d.season.includes(bucket.season)) score += 1.5;
+  const wantedOcc = ctx.isWeekend ? ['Casual','Date','Outdoor'] : ['Office','Casual'];
+  wantedOcc.forEach(o=>{ if(d.occasion.includes(o)) score += 0.8; });
+  if(d.timeOfDay && d.timeOfDay.includes(ctx.timeOfDay)) score += 0.8;
+  return score;
+}
+
+function computeTodaysLayering(weather){
+  const cond = weather ? weatherCodeInfo(weather.code)[1] : null;
+  const temp = weather ? weather.temp : null;
+  const bucket = climateBucket(temp, cond);
+  const ctx = dayTypeAndTime();
+
+  const scored = DATA.map(d=>({ d, score: fragranceClimateFit(d, bucket, ctx) })).sort((x,y)=>y.score-x.score);
+  let pool = scored.slice(0, Math.min(12, scored.length)).map(x=>x.d);
+  if(pool.length < 2) pool = DATA.slice(0, Math.min(12, DATA.length));
+
+  const scoreOf = (label)=>{ const f = scored.find(s=>s.d.label===label); return f ? f.score : 0; };
+  let candidates = [];
+  for(let i=0;i<pool.length;i++){
+    for(let j=i+1;j<pool.length;j++){
+      const A = pool[i], B = pool[j];
+      if(A.label===B.label) continue;
+      const res = analyzePairing(A.label, B.label);
+      if(res && res.verdict !== 'avoid'){
+        const fitScore = scoreOf(A.label) + scoreOf(B.label) + (res.verdict==='good' ? 2 : 0);
+        candidates.push({ res, fitScore });
+      }
+    }
+  }
+  if(!candidates.length){
+    /* relax entirely and just find any non-avoid pair in the collection */
+    outer:
+    for(let i=0;i<DATA.length;i++){
+      for(let j=i+1;j<DATA.length;j++){
+        const res = analyzePairing(DATA[i].label, DATA[j].label);
+        if(res && res.verdict !== 'avoid'){ candidates.push({ res, fitScore: 0 }); break outer; }
+      }
+    }
+  }
+  if(!candidates.length) return null;
+
+  candidates.sort((x,y)=>y.fitScore-x.fitScore);
+  const top = candidates.slice(0, Math.min(5, candidates.length));
+  const seed = hashStr(todayKey() + '|todayslayering');
+  const pick = top[seed % top.length];
+  return { res: pick.res, bucket, ctx, weather, cond };
+}
+
+function todaysLayeringSkeleton(){
+  return `
+    <div class="today-meta"><span class="tag skel-tag">Reading today's weather</span></div>
+    <div class="today-skel">
+      <div class="skel-line" style="width:64%"></div>
+      <div class="skel-line" style="width:42%"></div>
+      <div class="skel-line" style="width:80%"></div>
+      <div class="skel-line" style="width:55%"></div>
+    </div>`;
+}
+
+function todaysLayeringHTML(value){
+  if(!value){
+    return `
+      <div class="today-meta"><span class="tag">Not enough data</span></div>
+      <p class="playbook" style="margin:0;">Add a couple more fragrances to the collection and today's pairing will appear here.</p>`;
+  }
+  const { res, bucket, ctx, weather, cond } = value;
+  const weatherLabel = weather
+    ? Math.round(weather.temp)+'°C · '+weatherCodeInfo(weather.code)[0]
+    : 'Based on today’s date (location not shared)';
+  const { A, B } = res;
+  return `
+    <div class="today-meta">
+      <span class="tag">${esc(ctx.dayName)}</span>
+      <span class="tag">${esc(ctx.timeOfDay)}</span>
+      <span class="tag">${esc(ctx.isWeekend ? 'Weekend' : 'Weekday')}</span>
+      <span class="tag">${esc(weatherLabel)}</span>
+    </div>
+    <div class="today-pair-head">
+      <span>${esc(A.brand)} · ${esc(A.name)}</span>
+      <span class="calc-plus">+</span>
+      <span>${esc(B.brand)} · ${esc(B.name)}</span>
+    </div>
+    ${renderAnalysis(res)}
+    <a href="#/layering?a=${encodeURIComponent(A.label)}&b=${encodeURIComponent(B.label)}" class="btn btn-ghost" data-magnetic style="margin-top:1.2rem;">Open in the layering calculator ${ICONS.arrow}</a>`;
+}
+
+let TODAYS_LAYERING_CACHE = null;
+function loadTodaysLayering(){
+  const el = document.getElementById('todaysLayering');
+  if(!el) return;
+  if(TODAYS_LAYERING_CACHE && TODAYS_LAYERING_CACHE.day === todayKey()){
+    el.innerHTML = todaysLayeringHTML(TODAYS_LAYERING_CACHE.value);
+    el.classList.add('pop-in');
+    return;
+  }
+  fetchWeather().then(weather=>{
+    const value = computeTodaysLayering(weather);
+    TODAYS_LAYERING_CACHE = { value, day: todayKey() };
+    const freshEl = document.getElementById('todaysLayering');
+    if(!freshEl) return;
+    freshEl.innerHTML = todaysLayeringHTML(value);
+    freshEl.classList.add('pop-in');
+  });
 }
 
 /* ============ DRAWER ============ */
@@ -1434,7 +1716,10 @@ function bindMain(){
     };
     calcA.addEventListener('change', runCalc);
     calcB.addEventListener('change', runCalc);
+    if(calcA.value && calcB.value && calcA.value !== calcB.value){ runCalc(); }
   }
+
+  if(document.getElementById('todaysLayering')){ loadTodaysLayering(); }
 
   /* admin: unlock */
   const pwField = document.getElementById('adminPassword');
@@ -1540,7 +1825,9 @@ document.getElementById('hamburgerBtn').addEventListener('click', ()=>{
 });
 
 /* ============ INIT ============ */
-if(!location.hash) location.hash = '#/home';
+/* the landing page is the deliberate front door: every fresh load or reload
+   starts there, regardless of whatever route was last open */
+location.hash = '#/landing';
 render();
 </script>
 
