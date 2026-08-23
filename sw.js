@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bens-fragrance-archive-v1';
+const CACHE_NAME = 'bens-fragrance-archive-v2';
 const CORE_ASSETS = [
   './',
   './index.html',
@@ -45,7 +45,25 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Same-origin assets (app shell, images): cache-first, then network
+  // App shell HTML (navigations + index.html): network-first, so a new deploy
+  // shows up immediately. Falls back to the cached shell only when offline.
+  const isHTML = req.mode === 'navigate' || url.pathname.endsWith('/index.html') || url.pathname === '/';
+  if (url.origin === self.location.origin && isHTML) {
+    event.respondWith(
+      fetch(req)
+        .then((res) => {
+          if (res.ok) {
+            const clone = res.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(req, clone));
+          }
+          return res;
+        })
+        .catch(() => caches.match(req))
+    );
+    return;
+  }
+
+  // Other same-origin assets (images, manifest, icons): cache-first, then network
   if (url.origin === self.location.origin) {
     event.respondWith(
       caches.match(req).then((cached) => {
