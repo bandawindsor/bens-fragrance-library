@@ -373,6 +373,10 @@
   .admin-row{display:flex;align-items:center;justify-content:space-between;gap:.8rem;padding:.75rem .1rem;border-bottom:1px solid var(--line);}
   .admin-row strong{display:block;font-size:.92rem;}
   .admin-row-brand{font-size:.76rem;color:var(--ink-faint);}
+  .admin-row-actions{display:flex;gap:.5rem;flex-shrink:0;}
+  .admin-row-edit{display:flex;gap:.5rem;align-items:center;padding:.7rem .1rem 1rem;border-bottom:1px solid var(--line);flex-wrap:wrap;}
+  .admin-row-edit input{flex:1;min-width:180px;padding:.5rem .65rem;border:1px solid var(--line-strong);border-radius:var(--radius);background:var(--surface);color:var(--ink);font-size:.84rem;}
+  .admin-row-edit input:focus{border-color:var(--accent);}
   .calc-result{margin-top:1.4rem;padding:1rem 1.1rem;border-radius:var(--radius);font-size:.9rem;display:flex;gap:.6rem;align-items:flex-start;}
   .calc-result.partner{background:var(--accent-soft);color:var(--accent-strong);}
   .calc-result.restrict{background:color-mix(in srgb, #a24444 14%, transparent);color:#a24444;}
@@ -1021,6 +1025,7 @@ const TIME_OF_DAY = ['Morning','Afternoon','Evening','Night'];
 const PROJECTIONS = ['Intimate','Moderate','Strong'];
 const LONGEVITIES = ['2-4h','4-6h','6-8h','8-10h','10h+'];
 let adminRemoveConfirmId = null;
+let adminEditId = null;
 
 function renderAdmin(){
   if(!unlocked) return renderAdminLock();
@@ -1110,8 +1115,17 @@ function renderAdminList(query){
   return list.map(d=>`
     <div class="admin-row">
       <div><strong>${esc(d.name)}</strong><span class="admin-row-brand">${esc(d.brand)}</span></div>
-      <button class="btn btn-sm ${adminRemoveConfirmId===d.id ? 'btn-primary' : 'btn-ghost'}" data-remove="${d.id}">${adminRemoveConfirmId===d.id ? 'Confirm remove' : 'Remove'}</button>
-    </div>`).join('');
+      <div class="admin-row-actions">
+        <button class="btn btn-sm ${adminEditId===d.id ? 'btn-primary' : 'btn-ghost'}" data-edit="${d.id}">${d.buyUrl ? 'Edit link' : 'Add link'}</button>
+        <button class="btn btn-sm ${adminRemoveConfirmId===d.id ? 'btn-primary' : 'btn-ghost'}" data-remove="${d.id}">${adminRemoveConfirmId===d.id ? 'Confirm remove' : 'Remove'}</button>
+      </div>
+    </div>
+    ${adminEditId===d.id ? `
+    <div class="admin-row-edit">
+      <input type="url" id="editBuyUrl" placeholder="Shopee, Tokopedia, or anywhere else" value="${esc(d.buyUrl||'')}" />
+      <button class="btn btn-sm btn-primary" data-save-link="${d.id}">Save</button>
+      <button class="btn btn-sm btn-ghost" data-cancel-link="${d.id}">Cancel</button>
+    </div>` : ''}`).join('');
 }
 function nextFragranceId(){
   return RAW_DATA.length ? Math.max(...RAW_DATA.map(d=>d.id)) + 1 : 1;
@@ -1189,6 +1203,22 @@ async function removeFragrance(id){
   await sbRemove(id);
   RAW_DATA = RAW_DATA.filter(d=>d.id!==id);
   rebuildData();
+}
+async function updateFragrance(id, patch){
+  id = Number(id);
+  const current = RAW_DATA.find(d=>d.id===id);
+  if(!current) throw new Error('fragrance not found');
+  const updated = { ...current, ...patch };
+  await sbRemove(id);
+  try{
+    await sbAdd(updated);
+  }catch(err){
+    await sbAdd(current);
+    throw err;
+  }
+  RAW_DATA = RAW_DATA.map(d=>d.id===id ? updated : d);
+  rebuildData();
+  return updated;
 }
 async function addFragrance(fields){
   const item = {
@@ -1987,6 +2017,46 @@ function bindAdminList(){
         const search = document.getElementById('adminSearch');
         list.innerHTML = renderAdminList(search ? search.value : '');
         bindAdminList();
+      }
+    });
+  });
+
+  list.querySelectorAll('[data-edit]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const id = Number(btn.getAttribute('data-edit'));
+      adminEditId = adminEditId === id ? null : id;
+      const search = document.getElementById('adminSearch');
+      list.innerHTML = renderAdminList(search ? search.value : '');
+      bindAdminList();
+      const input = document.getElementById('editBuyUrl');
+      if(input) input.focus();
+    });
+  });
+  list.querySelectorAll('[data-cancel-link]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      adminEditId = null;
+      const search = document.getElementById('adminSearch');
+      list.innerHTML = renderAdminList(search ? search.value : '');
+      bindAdminList();
+    });
+  });
+  list.querySelectorAll('[data-save-link]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const id = Number(btn.getAttribute('data-save-link'));
+      const input = document.getElementById('editBuyUrl');
+      const url = input ? input.value.trim() : '';
+      btn.disabled = true; btn.textContent = 'Saving…';
+      try{
+        await updateFragrance(id, { buyUrl: url });
+        adminEditId = null;
+        const search = document.getElementById('adminSearch');
+        list.innerHTML = renderAdminList(search ? search.value : '');
+        bindAdminList();
+      }catch(err){
+        console.warn('updateFragrance failed', err);
+        btn.disabled = false; btn.textContent = 'Save';
+        const statusEl = document.querySelector('.admin-status');
+        if(statusEl) statusEl.textContent = 'Could not save — check your connection and try again.';
       }
     });
   });
