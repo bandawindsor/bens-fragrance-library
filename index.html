@@ -112,7 +112,7 @@
   .hero-photo-disc img{width:94%;height:94%;object-fit:contain;filter:var(--photo-grade) drop-shadow(0 40px 60px rgba(0,0,0,.55)) drop-shadow(0 4px 12px rgba(0,0,0,.3));transition:transform .6s cubic-bezier(.16,1,.3,1);}
   .hero-photo:hover .hero-photo-disc img{transform:scale(1.035);}
   .marquee{position:relative;z-index:2;border-top:1px solid var(--line);border-bottom:1px solid var(--line);overflow:hidden;background:var(--surface);}
-  .marquee-track{display:flex;width:max-content;animation:marqueeScroll 34s linear infinite;}
+  .marquee-track{display:flex;width:max-content;animation:marqueeScroll 42s linear infinite;}
   .marquee-track span{font-family:var(--font-display);font-style:italic;font-size:1.3rem;color:var(--ink-faint);padding:1rem 2.2rem;white-space:nowrap;border-right:1px solid var(--line);}
   .marquee-track span b{color:var(--ink);font-style:normal;font-family:var(--font-mono);font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;margin-right:.6rem;font-weight:400;}
   @keyframes marqueeScroll{from{transform:translateX(0);}to{transform:translateX(-50%);}}
@@ -681,11 +681,11 @@ function emptyState(msg){
 }
 
 /* ============ VIEW: LANDING ============ */
-const LANDING_HERO_IMAGE = "images/hero.jpg";
+const LANDING_HERO_IMAGE = "images/hero.webp";
 function renderLanding(){
   const word = (w) => `<span class="word"><span>${esc(w)}</span></span>`;
 
-  const marqueeItems = [...BRANDS, ...BRANDS].map(b=>`<span><b>House</b>${esc(b)}</span>`).join('');
+  const marqueeItems = BRANDS.map(b=>`<span><b>House</b>${esc(b)}</span>`).join('');
 
   return `
   <section class="hero landing-hero">
