@@ -118,10 +118,14 @@
   @keyframes marqueeScroll{from{transform:translateX(0);}to{transform:translateX(-50%);}}
   @media (prefers-reduced-motion: reduce){ .marquee-track{animation:none;} }
   @media (max-width:860px){
-    .hero{min-height:auto;display:block;padding-top:2.6rem;}
-    .hero-photo{position:relative;top:auto;right:auto;transform:none;width:100%;max-width:420px;margin:2.8rem auto 0;aspect-ratio:1/1;}
+    .hero{min-height:auto;display:flex;flex-direction:column;padding-top:2.6rem;}
+    .hero-copy{order:1;max-width:none;}
+    .hero-photo{order:2;position:relative;top:auto;right:auto;transform:none;width:100%;max-width:420px;margin:2.8rem auto 0;aspect-ratio:1/1;}
     .hero-watermark{display:none;}
-    .hero-copy{max-width:none;}
+  }
+  @media (max-width:520px){
+    .hero h1{font-size:clamp(2.3rem,10vw,3rem);}
+    .hero-mini-stats{gap:1.3rem;}
   }
 
   /* ---------- stat strip ---------- */
