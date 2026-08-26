@@ -2088,9 +2088,9 @@ async function buildShareCanvas(d){
 
   if(d.personalNotes){
     y += 24;
-    ctx.fillStyle = MUTED; ctx.font = 'italic 400 26px "Bodoni Moda", serif';
+    ctx.fillStyle = INK; ctx.font = '400 27px "Archivo", sans-serif';
     const lq = String.fromCharCode(8220), rq = String.fromCharCode(8221);
-    for(const line of wrapLines(ctx, lq + d.personalNotes + rq, 780)){ ctx.fillText(line, W/2, y); y += 38; }
+    for(const line of wrapLines(ctx, lq + d.personalNotes + rq, 780)){ ctx.fillText(line, W/2, y); y += 40; }
   }
 
   const bottomBlockH = 190;
