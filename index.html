@@ -350,7 +350,7 @@
   .admin-panel h3{font-size:1.1rem;margin-bottom:1.1rem;}
   .admin-panel .field{margin-bottom:.9rem;}
   .admin-panel .field label{display:block;font-size:.78rem;color:var(--ink-faint);margin-bottom:.35rem;}
-  .admin-panel input[type="text"], .admin-panel input[type="password"], .admin-panel select, .admin-panel textarea{
+  .admin-panel input[type="text"], .admin-panel input[type="password"], .admin-panel input[type="url"], .admin-panel select, .admin-panel textarea{
     width:100%;padding:.6rem .7rem;border:1px solid var(--line-strong);border-radius:var(--radius);background:var(--surface);color:var(--ink);font-size:.88rem;resize:vertical;
   }
   .admin-panel input::placeholder, .admin-panel textarea::placeholder, .admin-lock input::placeholder, .search-field input::placeholder{color:var(--ink-faint);opacity:1;}
@@ -374,9 +374,8 @@
   .admin-row strong{display:block;font-size:.92rem;}
   .admin-row-brand{font-size:.76rem;color:var(--ink-faint);}
   .admin-row-actions{display:flex;gap:.5rem;flex-shrink:0;}
-  .admin-row-edit{display:flex;gap:.5rem;align-items:center;padding:.7rem .1rem 1rem;border-bottom:1px solid var(--line);flex-wrap:wrap;}
-  .admin-row-edit input{flex:1;min-width:180px;padding:.5rem .65rem;border:1px solid var(--line-strong);border-radius:var(--radius);background:var(--surface);color:var(--ink);font-size:.84rem;}
-  .admin-row-edit input:focus{border-color:var(--accent);}
+  .admin-row-edit{padding:1.1rem .8rem 1.3rem;margin-bottom:.5rem;border-bottom:1px solid var(--line);background:var(--bg);border-radius:var(--radius);}
+  .admin-row-edit-actions{display:flex;gap:.6rem;margin-top:.4rem;}
   .calc-result{margin-top:1.4rem;padding:1rem 1.1rem;border-radius:var(--radius);font-size:.9rem;display:flex;gap:.6rem;align-items:flex-start;}
   .calc-result.partner{background:var(--accent-soft);color:var(--accent-strong);}
   .calc-result.restrict{background:color-mix(in srgb, #a24444 14%, transparent);color:#a24444;}
@@ -1027,6 +1026,44 @@ const LONGEVITIES = ['2-4h','4-6h','6-8h','8-10h','10h+'];
 let adminRemoveConfirmId = null;
 let adminEditId = null;
 
+function fragranceFormFields(suffix, d){
+  d = d || {};
+  const val = (v)=> esc(v==null ? '' : v);
+  const joinArr = (a)=> esc((a||[]).join(', '));
+  const hasImg = !!d.image;
+  return `
+    <div class="field"><label>Name*</label><input type="text" name="name" required placeholder="e.g. Midnight Bloom" value="${val(d.name)}" /></div>
+    <div class="field"><label>Brand*</label><input type="text" name="brand" required placeholder="e.g. Aoera" value="${val(d.brand)}" /></div>
+    <div class="field"><label>Olfactory family*</label><input type="text" name="olfactoryFamily" required placeholder="e.g. Woody Amber" value="${val(d.olfactoryFamily)}" /></div>
+    <div class="field-row">
+      <div class="field"><label>Top notes*</label><input type="text" name="topNotes" required placeholder="Bergamot, Pink Pepper" value="${joinArr(d.topNotes)}" /></div>
+      <div class="field"><label>Heart notes</label><input type="text" name="middleNotes" placeholder="Rose, Jasmine" value="${joinArr(d.middleNotes)}" /></div>
+      <div class="field"><label>Base notes</label><input type="text" name="baseNotes" placeholder="Musk, Cedarwood" value="${joinArr(d.baseNotes)}" /></div>
+    </div>
+    <div class="field"><label>Mood</label><input type="text" name="mood" placeholder="Sophisticated, Romantic" value="${joinArr(d.mood)}" /></div>
+    <div class="check-group"><label>Season</label><div class="check-row">${SEASONS.map(s=>`<label class="check-pill"><input type="checkbox" name="season" value="${esc(s)}" ${(d.season||[]).includes(s)?'checked':''} />${esc(s)}</label>`).join('')}</div></div>
+    <div class="check-group"><label>Time of day</label><div class="check-row">${TIME_OF_DAY.map(s=>`<label class="check-pill"><input type="checkbox" name="timeOfDay" value="${esc(s)}" ${(d.timeOfDay||[]).includes(s)?'checked':''} />${esc(s)}</label>`).join('')}</div></div>
+    <div class="check-group"><label>Occasion</label><div class="check-row">${OCCASIONS_FULL.map(s=>`<label class="check-pill"><input type="checkbox" name="occasion" value="${esc(s)}" ${(d.occasion||[]).includes(s)?'checked':''} />${esc(s)}</label>`).join('')}</div></div>
+    <div class="field-row">
+      <div class="field"><label>Projection</label><select name="projection">${PROJECTIONS.map(p=>`<option ${(d.projection?d.projection===p:p==='Moderate')?'selected':''}>${esc(p)}</option>`).join('')}</select></div>
+      <div class="field"><label>Longevity</label><select name="longevity">${LONGEVITIES.map(l=>`<option ${(d.longevity?d.longevity===l:l==='6-8h')?'selected':''}>${esc(l)}</option>`).join('')}</select></div>
+    </div>
+    <div class="field"><label>Personal notes</label><textarea name="personalNotes" rows="2" placeholder="Optional">${val(d.personalNotes)}</textarea></div>
+    <div class="field"><label>Buy link</label><input type="url" name="buyUrl" placeholder="Shopee, Tokopedia, or anywhere else — optional" value="${val(d.buyUrl)}" /></div>
+    <div class="field">
+      <label>Photo</label>
+      <div class="dropzone" id="imgDropzone-${suffix}" tabindex="0" role="button" aria-label="Upload a photo">
+        <input type="file" id="imgInput-${suffix}" accept="image/*" hidden />
+        <div class="dropzone-empty" id="dropzoneEmpty-${suffix}" ${hasImg?'hidden':''}>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <span>Drag a photo here, or click to browse</span>
+        </div>
+        <img class="dropzone-preview" id="dropzonePreview-${suffix}" ${hasImg?'':'hidden'} src="${hasImg?esc(d.image):''}" alt="" />
+        <button type="button" class="dropzone-clear" id="dropzoneClear-${suffix}" ${hasImg?'':'hidden'}>Remove photo</button>
+      </div>
+    </div>`;
+}
+
 function renderAdmin(){
   if(!unlocked) return renderAdminLock();
   const flash = window.__adminFlash; window.__adminFlash = null;
@@ -1048,36 +1085,7 @@ function renderAdmin(){
         <div class="admin-panel reveal-io" style="--d:2">
           <h3>Add a fragrance</h3>
           <form id="addForm">
-            <div class="field"><label>Name*</label><input type="text" name="name" required placeholder="e.g. Midnight Bloom" /></div>
-            <div class="field"><label>Brand*</label><input type="text" name="brand" required placeholder="e.g. Aoera" /></div>
-            <div class="field"><label>Olfactory family*</label><input type="text" name="olfactoryFamily" required placeholder="e.g. Woody Amber" /></div>
-            <div class="field-row">
-              <div class="field"><label>Top notes*</label><input type="text" name="topNotes" required placeholder="Bergamot, Pink Pepper" /></div>
-              <div class="field"><label>Heart notes</label><input type="text" name="middleNotes" placeholder="Rose, Jasmine" /></div>
-              <div class="field"><label>Base notes</label><input type="text" name="baseNotes" placeholder="Musk, Cedarwood" /></div>
-            </div>
-            <div class="field"><label>Mood</label><input type="text" name="mood" placeholder="Sophisticated, Romantic" /></div>
-            <div class="check-group"><label>Season</label><div class="check-row">${SEASONS.map(s=>`<label class="check-pill"><input type="checkbox" name="season" value="${esc(s)}" />${esc(s)}</label>`).join('')}</div></div>
-            <div class="check-group"><label>Time of day</label><div class="check-row">${TIME_OF_DAY.map(s=>`<label class="check-pill"><input type="checkbox" name="timeOfDay" value="${esc(s)}" />${esc(s)}</label>`).join('')}</div></div>
-            <div class="check-group"><label>Occasion</label><div class="check-row">${OCCASIONS_FULL.map(s=>`<label class="check-pill"><input type="checkbox" name="occasion" value="${esc(s)}" />${esc(s)}</label>`).join('')}</div></div>
-            <div class="field-row">
-              <div class="field"><label>Projection</label><select name="projection">${PROJECTIONS.map(p=>`<option ${p==='Moderate'?'selected':''}>${esc(p)}</option>`).join('')}</select></div>
-              <div class="field"><label>Longevity</label><select name="longevity">${LONGEVITIES.map(l=>`<option ${l==='6-8h'?'selected':''}>${esc(l)}</option>`).join('')}</select></div>
-            </div>
-            <div class="field"><label>Personal notes</label><textarea name="personalNotes" rows="2" placeholder="Optional"></textarea></div>
-            <div class="field"><label>Buy link</label><input type="url" name="buyUrl" placeholder="Shopee, Tokopedia, or anywhere else — optional" /></div>
-            <div class="field">
-              <label>Photo</label>
-              <div class="dropzone" id="imgDropzone" tabindex="0" role="button" aria-label="Upload a photo">
-                <input type="file" id="imgInput" accept="image/*" hidden />
-                <div class="dropzone-empty" id="dropzoneEmpty">
-                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                  <span>Drag a photo here, or click to browse</span>
-                </div>
-                <img class="dropzone-preview" id="dropzonePreview" hidden alt="" />
-                <button type="button" class="dropzone-clear" id="dropzoneClear" hidden>Remove photo</button>
-              </div>
-            </div>
+            ${fragranceFormFields('add', {})}
             <div class="form-error" id="addFormError" hidden></div>
             <button class="btn btn-primary" type="submit">Add to collection</button>
           </form>
@@ -1116,15 +1124,20 @@ function renderAdminList(query){
     <div class="admin-row">
       <div><strong>${esc(d.name)}</strong><span class="admin-row-brand">${esc(d.brand)}</span></div>
       <div class="admin-row-actions">
-        <button class="btn btn-sm ${adminEditId===d.id ? 'btn-primary' : 'btn-ghost'}" data-edit="${d.id}">${d.buyUrl ? 'Edit link' : 'Add link'}</button>
+        <button class="btn btn-sm ${adminEditId===d.id ? 'btn-primary' : 'btn-ghost'}" data-edit="${d.id}">${adminEditId===d.id ? 'Close' : 'Edit'}</button>
         <button class="btn btn-sm ${adminRemoveConfirmId===d.id ? 'btn-primary' : 'btn-ghost'}" data-remove="${d.id}">${adminRemoveConfirmId===d.id ? 'Confirm remove' : 'Remove'}</button>
       </div>
     </div>
     ${adminEditId===d.id ? `
     <div class="admin-row-edit">
-      <input type="url" id="editBuyUrl" placeholder="Shopee, Tokopedia, or anywhere else" value="${esc(d.buyUrl||'')}" />
-      <button class="btn btn-sm btn-primary" data-save-link="${d.id}">Save</button>
-      <button class="btn btn-sm btn-ghost" data-cancel-link="${d.id}">Cancel</button>
+      <form id="editForm-${d.id}">
+        ${fragranceFormFields('e'+d.id, d)}
+        <div class="form-error" id="editFormError-${d.id}" hidden></div>
+        <div class="admin-row-edit-actions">
+          <button class="btn btn-sm btn-primary" type="submit">Save changes</button>
+          <button class="btn btn-sm btn-ghost" type="button" data-cancel-edit="${d.id}">Cancel</button>
+        </div>
+      </form>
     </div>` : ''}`).join('');
 }
 function nextFragranceId(){
@@ -1133,6 +1146,7 @@ function nextFragranceId(){
 
 /* ============ ADMIN: PHOTO DROPZONE ============ */
 let pendingImage = '';
+let pendingEditImage = '';
 function compressImageFile(file, maxDim, quality){
   return new Promise((resolve, reject)=>{
     const reader = new FileReader();
@@ -1158,20 +1172,20 @@ function compressImageFile(file, maxDim, quality){
     reader.readAsDataURL(file);
   });
 }
-function bindImageDropzone(){
-  const zone = document.getElementById('imgDropzone');
+function bindImageDropzoneFor(suffix, initial, onChange){
+  const zone = document.getElementById('imgDropzone-'+suffix);
   if(!zone) return;
-  const input = document.getElementById('imgInput');
-  const emptyEl = document.getElementById('dropzoneEmpty');
-  const previewEl = document.getElementById('dropzonePreview');
-  const clearBtn = document.getElementById('dropzoneClear');
-  pendingImage = '';
+  const input = document.getElementById('imgInput-'+suffix);
+  const emptyEl = document.getElementById('dropzoneEmpty-'+suffix);
+  const previewEl = document.getElementById('dropzonePreview-'+suffix);
+  const clearBtn = document.getElementById('dropzoneClear-'+suffix);
 
   async function handleFile(file){
     if(!file || !file.type.startsWith('image/')) return;
     try{
-      pendingImage = await compressImageFile(file, 900, .82);
-      previewEl.src = pendingImage;
+      const dataUrl = await compressImageFile(file, 900, .82);
+      onChange(dataUrl);
+      previewEl.src = dataUrl;
       previewEl.hidden = false;
       emptyEl.hidden = true;
       clearBtn.hidden = false;
@@ -1191,12 +1205,16 @@ function bindImageDropzone(){
   });
   clearBtn.addEventListener('click', (e)=>{
     e.stopPropagation();
-    pendingImage = '';
+    onChange('');
     input.value = '';
     previewEl.hidden = true; previewEl.src = '';
     emptyEl.hidden = false;
     clearBtn.hidden = true;
   });
+}
+function bindImageDropzone(){
+  pendingImage = '';
+  bindImageDropzoneFor('add', '', v=>{ pendingImage = v; });
 }
 async function removeFragrance(id){
   id = Number(id);
@@ -1220,9 +1238,8 @@ async function updateFragrance(id, patch){
   rebuildData();
   return updated;
 }
-async function addFragrance(fields){
-  const item = {
-    id: nextFragranceId(),
+function fieldsToItemPatch(fields){
+  return {
     name: fields.name.trim(),
     brand: fields.brand.trim(),
     olfactoryFamily: fields.olfactoryFamily.trim(),
@@ -1238,6 +1255,23 @@ async function addFragrance(fields){
     personalNotes: fields.personalNotes.trim(),
     image: fields.image || '',
     buyUrl: (fields.buyUrl || '').trim(),
+  };
+}
+function readFragranceFormFields(form, image){
+  const fd = new FormData(form);
+  return {
+    name: fd.get('name')||'', brand: fd.get('brand')||'', olfactoryFamily: fd.get('olfactoryFamily')||'',
+    topNotes: fd.get('topNotes')||'', middleNotes: fd.get('middleNotes')||'', baseNotes: fd.get('baseNotes')||'',
+    mood: fd.get('mood')||'', personalNotes: fd.get('personalNotes')||'',
+    projection: fd.get('projection')||'Moderate', longevity: fd.get('longevity')||'6-8h',
+    season: fd.getAll('season'), timeOfDay: fd.getAll('timeOfDay'), occasion: fd.getAll('occasion'),
+    image, buyUrl: fd.get('buyUrl')||'',
+  };
+}
+async function addFragrance(fields){
+  const item = {
+    id: nextFragranceId(),
+    ...fieldsToItemPatch(fields),
     rating: 0,
     layeringPartners: [],
     layeringRestrictions: [],
@@ -1951,15 +1985,7 @@ function bindMain(){
       e.preventDefault();
       const errEl = document.getElementById('addFormError');
       errEl.hidden = true;
-      const fd = new FormData(addForm);
-      const fields = {
-        name: fd.get('name')||'', brand: fd.get('brand')||'', olfactoryFamily: fd.get('olfactoryFamily')||'',
-        topNotes: fd.get('topNotes')||'', middleNotes: fd.get('middleNotes')||'', baseNotes: fd.get('baseNotes')||'',
-        mood: fd.get('mood')||'', personalNotes: fd.get('personalNotes')||'',
-        projection: fd.get('projection')||'Moderate', longevity: fd.get('longevity')||'6-8h',
-        season: fd.getAll('season'), timeOfDay: fd.getAll('timeOfDay'), occasion: fd.getAll('occasion'),
-        image: pendingImage, buyUrl: fd.get('buyUrl')||'',
-      };
+      const fields = readFragranceFormFields(addForm, pendingImage);
       if(!fields.name.trim() || !fields.brand.trim() || !fields.olfactoryFamily.trim() || !fields.topNotes.trim()){
         errEl.hidden = false; errEl.textContent = 'Name, brand, family and at least one top note are required.';
         return;
@@ -2028,11 +2054,16 @@ function bindAdminList(){
       const search = document.getElementById('adminSearch');
       list.innerHTML = renderAdminList(search ? search.value : '');
       bindAdminList();
-      const input = document.getElementById('editBuyUrl');
-      if(input) input.focus();
+      if(adminEditId === id){
+        const record = DATA.find(d=>d.id===id);
+        pendingEditImage = record ? (record.image || '') : '';
+        bindImageDropzoneFor('e'+id, pendingEditImage, v=>{ pendingEditImage = v; });
+        const firstInput = document.querySelector(`#editForm-${id} input[name="name"]`);
+        if(firstInput) firstInput.focus();
+      }
     });
   });
-  list.querySelectorAll('[data-cancel-link]').forEach(btn=>{
+  list.querySelectorAll('[data-cancel-edit]').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       adminEditId = null;
       const search = document.getElementById('adminSearch');
@@ -2040,23 +2071,30 @@ function bindAdminList(){
       bindAdminList();
     });
   });
-  list.querySelectorAll('[data-save-link]').forEach(btn=>{
-    btn.addEventListener('click', async ()=>{
-      const id = Number(btn.getAttribute('data-save-link'));
-      const input = document.getElementById('editBuyUrl');
-      const url = input ? input.value.trim() : '';
-      btn.disabled = true; btn.textContent = 'Saving…';
+  list.querySelectorAll('form[id^="editForm-"]').forEach(form=>{
+    form.addEventListener('submit', async e=>{
+      e.preventDefault();
+      const id = Number(form.id.replace('editForm-',''));
+      const errEl = document.getElementById(`editFormError-${id}`);
+      errEl.hidden = true;
+      const fields = readFragranceFormFields(form, pendingEditImage);
+      if(!fields.name.trim() || !fields.brand.trim() || !fields.olfactoryFamily.trim() || !fields.topNotes.trim()){
+        errEl.hidden = false; errEl.textContent = 'Name, brand, family and at least one top note are required.';
+        return;
+      }
+      const submitBtn = form.querySelector('button[type="submit"]');
+      const originalLabel = submitBtn.textContent;
+      submitBtn.disabled = true; submitBtn.textContent = 'Saving…';
       try{
-        await updateFragrance(id, { buyUrl: url });
+        const patch = fieldsToItemPatch(fields);
+        await updateFragrance(id, patch);
         adminEditId = null;
-        const search = document.getElementById('adminSearch');
-        list.innerHTML = renderAdminList(search ? search.value : '');
-        bindAdminList();
+        window.__adminFlash = `Updated ${patch.brand} - ${patch.name}.`;
+        render();
       }catch(err){
         console.warn('updateFragrance failed', err);
-        btn.disabled = false; btn.textContent = 'Save';
-        const statusEl = document.querySelector('.admin-status');
-        if(statusEl) statusEl.textContent = 'Could not save — check your connection and try again.';
+        errEl.hidden = false; errEl.textContent = 'Could not save to the database. Check your connection and try again.';
+        submitBtn.disabled = false; submitBtn.textContent = originalLabel;
       }
     });
   });
