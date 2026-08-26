@@ -2021,12 +2021,12 @@ async function buildShareCanvas(d){
   ctx.fillRect(0, 0, W, MAX_H);
   ctx.textAlign = 'center';
 
-  let y = 130;
+  let y = 110;
 
   ctx.fillStyle = ACCENT;
   ctx.font = '600 25px "IBM Plex Mono", monospace';
   ctx.fillText("BEN'S FRAGRANCE LIBRARY", W/2, y);
-  y += 74;
+  y += 56;
 
   if(d.image){
     try{
@@ -2040,7 +2040,7 @@ async function buildShareCanvas(d){
       ctx.shadowOffsetY = 24;
       ctx.drawImage(img, W/2 - iw/2, y, iw, ih);
       ctx.restore();
-      y += boxSize + 56;
+      y += boxSize + 40;
     }catch(e){ y += 16; }
   } else {
     y += 16;
@@ -2049,17 +2049,17 @@ async function buildShareCanvas(d){
   ctx.fillStyle = MUTED;
   ctx.font = '400 27px "IBM Plex Mono", monospace';
   ctx.fillText(d.brand.toUpperCase(), W/2, y);
-  y += 56;
+  y += 44;
 
   ctx.fillStyle = INK;
   ctx.font = 'italic 500 62px "Bodoni Moda", serif';
   for(const line of wrapLines(ctx, d.name, 860)){ ctx.fillText(line, W/2, y); y += 68; }
-  y += 14;
+  y += 8;
 
   ctx.strokeStyle = 'rgba(243,238,227,0.16)';
   ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(W/2-160, y); ctx.lineTo(W/2+160, y); ctx.stroke();
-  y += 36;
+  y += 26;
 
   const bodyFont = '400 26px "Archivo", sans-serif';
   const labelFont = '600 20px "IBM Plex Mono", monospace';
@@ -2081,20 +2081,20 @@ async function buildShareCanvas(d){
     ty += labelH;
     ctx.fillStyle = INK; ctx.font = bodyFont;
     for(const line of lines){ ctx.fillText(line, CARD_X + PAD_X, ty); ty += lineH; }
-    y += cardH + 22;
+    y += cardH + 14;
   }
-  y += 20;
+  y += 10;
   ctx.textAlign = 'center';
 
   if(d.personalNotes){
-    y += 24;
+    y += 14;
     ctx.fillStyle = INK; ctx.font = '400 27px "Archivo", sans-serif';
     const lq = String.fromCharCode(8220), rq = String.fromCharCode(8221);
-    for(const line of wrapLines(ctx, lq + d.personalNotes + rq, 780)){ ctx.fillText(line, W/2, y); y += 40; }
+    for(const line of wrapLines(ctx, lq + d.personalNotes + rq, 780)){ ctx.fillText(line, W/2, y); y += 36; }
   }
 
-  y += 60;
-  const bottomMargin = 160;
+  y += 30;
+  const bottomMargin = 340;
   const finalH = Math.max(1500, Math.min(MAX_H, Math.round(y + bottomMargin)));
 
   ctx.fillStyle = ACCENT;
