@@ -1443,7 +1443,8 @@ function generateBlendDescription(res){
   const flavor = res.verdict==='good'
     ? 'the two build on each other rather than competing for attention'
     : 'they sit together without clashing, more coexistence than true fusion';
-  return `Opens with ${adjA} from ${res.A.name}, settles into ${adjB} from ${res.B.name} — ${flavor}.`;
+  const dash = String.fromCharCode(8212);
+  return `Opens with ${adjA} from ${res.A.name}, settles into ${adjB} from ${res.B.name} ${dash} ${flavor}.`;
 }
 
 /* ============ LAYERING LAB (saved blends, stored per-browser) ============ */
@@ -2022,20 +2023,27 @@ async function buildShareCanvas(d){
   ctx.beginPath(); ctx.moveTo(W/2-180, y); ctx.lineTo(W/2+180, y); ctx.stroke();
   y += 64;
 
-  const notes = [...d.topNotes, ...d.middleNotes, ...d.baseNotes].join(' · ');
-  if(notes){
-    ctx.fillStyle = '#C2603E'; ctx.font = '600 24px "IBM Plex Mono", monospace';
-    ctx.fillText('NOTES', W/2, y); y += 42;
-    ctx.fillStyle = '#F3EEE3'; ctx.font = '400 28px "Archivo", sans-serif';
-    y = wrapCanvasText(ctx, notes, W/2, y, 820, 38) + 20;
+  const noteTiers = [
+    ['TOP', d.topNotes],
+    ['MIDDLE', d.middleNotes],
+    ['BASE', d.baseNotes],
+  ];
+  for(const [label, list] of noteTiers){
+    if(!list || !list.length) continue;
+    ctx.fillStyle = '#C2603E'; ctx.font = '600 22px "IBM Plex Mono", monospace';
+    ctx.fillText(label, W/2, y); y += 40;
+    ctx.fillStyle = '#F3EEE3'; ctx.font = '400 27px "Archivo", sans-serif';
+    y = wrapCanvasText(ctx, list.join(', '), W/2, y, 820, 36) + 26;
   }
+  y += 4;
 
+  const emDash = String.fromCharCode(8212);
   const rows = [
-    ['SEASON', (d.season||[]).join(', ')||'—'],
-    ['OCCASION', (d.occasion||[]).join(', ')||'—'],
-    ['TIME OF DAY', (d.timeOfDay||[]).join(', ')||'—'],
-    ['PROJECTION', d.projection||'—'],
-    ['LONGEVITY', d.longevity||'—'],
+    ['SEASON', (d.season||[]).join(', ')||emDash],
+    ['OCCASION', (d.occasion||[]).join(', ')||emDash],
+    ['TIME OF DAY', (d.timeOfDay||[]).join(', ')||emDash],
+    ['PROJECTION', d.projection||emDash],
+    ['LONGEVITY', d.longevity||emDash],
   ];
   y += 10;
   for(const [label,val] of rows){
@@ -2052,17 +2060,12 @@ async function buildShareCanvas(d){
   if(d.personalNotes){
     y += 20;
     ctx.fillStyle = '#A79D8B'; ctx.font = 'italic 400 28px "Bodoni Moda", serif';
-    y = wrapCanvasText(ctx, '“' + d.personalNotes + '”', W/2, y, 780, 40);
+    const lq = String.fromCharCode(8220), rq = String.fromCharCode(8221);
+    y = wrapCanvasText(ctx, lq + d.personalNotes + rq, W/2, y, 780, 40);
   }
 
-  if(d.buyUrl){
-    ctx.fillStyle = '#C2603E'; ctx.font = '600 24px "Archivo", sans-serif';
-    ctx.fillText('SHOP THIS SCENT', W/2, H-210);
-    ctx.fillStyle = '#F3EEE3'; ctx.font = '400 22px "IBM Plex Mono", monospace';
-    let urlText = d.buyUrl.replace(/^https?:\/\//,'');
-    if(urlText.length > 42) urlText = urlText.slice(0,40)+'…';
-    ctx.fillText(urlText, W/2, H-172);
-  }
+  ctx.fillStyle = '#C2603E'; ctx.font = '600 26px "Archivo", sans-serif';
+  ctx.fillText('BUY NOW', W/2, H-190);
 
   ctx.fillStyle = 'rgba(243,238,227,0.35)';
   ctx.font = '400 22px "IBM Plex Mono", monospace';
