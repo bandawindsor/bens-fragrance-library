@@ -2025,7 +2025,7 @@ async function buildShareCanvas(d){
 
   ctx.fillStyle = ACCENT;
   ctx.font = '600 25px "IBM Plex Mono", monospace';
-  ctx.fillText("BEN'S FRAGRANCE ARCHIVE", W/2, y);
+  ctx.fillText("BEN'S FRAGRANCE LIBRARY", W/2, y);
   y += 74;
 
   if(d.image){
@@ -2054,12 +2054,12 @@ async function buildShareCanvas(d){
   ctx.fillStyle = INK;
   ctx.font = 'italic 500 62px "Bodoni Moda", serif';
   for(const line of wrapLines(ctx, d.name, 860)){ ctx.fillText(line, W/2, y); y += 68; }
-  y += 30;
+  y += 14;
 
   ctx.strokeStyle = 'rgba(243,238,227,0.16)';
   ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(W/2-160, y); ctx.lineTo(W/2+160, y); ctx.stroke();
-  y += 54;
+  y += 36;
 
   const bodyFont = '400 26px "Archivo", sans-serif';
   const labelFont = '600 20px "IBM Plex Mono", monospace';
@@ -2093,18 +2093,15 @@ async function buildShareCanvas(d){
     for(const line of wrapLines(ctx, lq + d.personalNotes + rq, 780)){ ctx.fillText(line, W/2, y); y += 40; }
   }
 
-  const bottomBlockH = 190;
-  const finalH = Math.max(1500, Math.min(MAX_H, Math.round(y + bottomBlockH)));
+  y += 60;
+  const bottomMargin = 160;
+  const finalH = Math.max(1500, Math.min(MAX_H, Math.round(y + bottomMargin)));
 
   ctx.fillStyle = ACCENT;
   ctx.font = '600 27px "Archivo", sans-serif';
-  ctx.fillText('BUY NOW', W/2, finalH - 120);
+  ctx.fillText('BUY NOW', W/2, y);
   ctx.strokeStyle = ACCENT; ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.moveTo(W/2-96, finalH-100); ctx.lineTo(W/2+96, finalH-100); ctx.stroke();
-
-  ctx.fillStyle = 'rgba(243,238,227,0.35)';
-  ctx.font = '400 21px "IBM Plex Mono", monospace';
-  ctx.fillText(location.hostname || "bensfragrance.vercel.app", W/2, finalH - 50);
+  ctx.beginPath(); ctx.moveTo(W/2-96, y+20); ctx.lineTo(W/2+96, y+20); ctx.stroke();
 
   const out = document.createElement('canvas');
   out.width = W; out.height = finalH;
