@@ -1983,88 +1983,109 @@ function loadImageEl(src){
     img.src = src;
   });
 }
-function wrapCanvasText(ctx, text, x, y, maxWidth, lineHeight){
+function wrapLines(ctx, text, maxWidth){
   const words = text.split(' ');
+  const lines = [];
   let line = '';
-  for(let i=0;i<words.length;i++){
-    const test = line + words[i] + ' ';
+  for(const word of words){
+    const test = line ? line + ' ' + word : word;
     if(ctx.measureText(test).width > maxWidth && line){
-      ctx.fillText(line.trim(), x, y);
-      line = words[i] + ' ';
-      y += lineHeight;
+      lines.push(line);
+      line = word;
     } else {
       line = test;
     }
   }
-  ctx.fillText(line.trim(), x, y);
-  return y + lineHeight;
+  if(line) lines.push(line);
+  return lines;
+}
+function roundRectPath(ctx, x, y, w, h, r){
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.arcTo(x+w, y, x+w, y+h, r);
+  ctx.arcTo(x+w, y+h, x, y+h, r);
+  ctx.arcTo(x, y+h, x, y, r);
+  ctx.arcTo(x, y, x+w, y, r);
+  ctx.closePath();
 }
 async function buildShareCanvas(d){
-  const W = 1080, H = 1920;
+  const W = 1080, MAX_H = 2600;
+  const BG = '#12100E', ACCENT = '#C2603E', INK = '#F3EEE3', MUTED = '#A79D8B', FAINT = '#8C8370';
+  const CARD_BG = 'rgba(255,255,255,0.045)', CARD_BORDER = 'rgba(255,255,255,0.09)';
+  const CARD_W = 900, CARD_X = W/2 - CARD_W/2, PAD_X = 44, PAD_Y = 30;
+  const emDash = String.fromCharCode(8212);
+
   const canvas = document.createElement('canvas');
-  canvas.width = W; canvas.height = H;
+  canvas.width = W; canvas.height = MAX_H;
   const ctx = canvas.getContext('2d');
-
-  const grad = ctx.createLinearGradient(0,0,0,H);
-  grad.addColorStop(0, '#171512');
-  grad.addColorStop(1, '#0F0E0C');
-  ctx.fillStyle = grad;
-  ctx.fillRect(0,0,W,H);
+  ctx.fillStyle = BG;
+  ctx.fillRect(0, 0, W, MAX_H);
   ctx.textAlign = 'center';
-  let y = 190;
 
-  ctx.fillStyle = '#C2603E';
-  ctx.font = '500 26px "IBM Plex Mono", monospace';
+  let y = 130;
+
+  ctx.fillStyle = ACCENT;
+  ctx.font = '600 25px "IBM Plex Mono", monospace';
   ctx.fillText("BEN'S FRAGRANCE ARCHIVE", W/2, y);
-  y += 90;
+  y += 74;
 
   if(d.image){
     try{
       const img = await loadImageEl(d.image);
-      const boxSize = 620;
+      const boxSize = 600;
       const scale = Math.min(boxSize/img.naturalWidth, boxSize/img.naturalHeight);
       const iw = img.naturalWidth*scale, ih = img.naturalHeight*scale;
       ctx.save();
-      ctx.shadowColor = 'rgba(0,0,0,0.5)';
-      ctx.shadowBlur = 60;
-      ctx.shadowOffsetY = 30;
+      ctx.shadowColor = 'rgba(0,0,0,0.55)';
+      ctx.shadowBlur = 50;
+      ctx.shadowOffsetY = 24;
       ctx.drawImage(img, W/2 - iw/2, y, iw, ih);
       ctx.restore();
-      y += boxSize + 70;
-    }catch(e){ y += 30; }
+      y += boxSize + 56;
+    }catch(e){ y += 16; }
   } else {
-    y += 30;
+    y += 16;
   }
 
-  ctx.fillStyle = '#A79D8B';
-  ctx.font = '400 30px "IBM Plex Mono", monospace';
+  ctx.fillStyle = MUTED;
+  ctx.font = '400 27px "IBM Plex Mono", monospace';
   ctx.fillText(d.brand.toUpperCase(), W/2, y);
-  y += 66;
+  y += 56;
 
-  ctx.fillStyle = '#F3EEE3';
-  ctx.font = 'italic 500 68px "Bodoni Moda", serif';
-  y = wrapCanvasText(ctx, d.name, W/2, y, 880, 76) - 26;
-  y += 50;
+  ctx.fillStyle = INK;
+  ctx.font = 'italic 500 62px "Bodoni Moda", serif';
+  for(const line of wrapLines(ctx, d.name, 860)){ ctx.fillText(line, W/2, y); y += 68; }
+  y += 30;
 
-  ctx.strokeStyle = 'rgba(243,238,227,0.18)';
-  ctx.beginPath(); ctx.moveTo(W/2-180, y); ctx.lineTo(W/2+180, y); ctx.stroke();
-  y += 64;
+  ctx.strokeStyle = 'rgba(243,238,227,0.16)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(W/2-160, y); ctx.lineTo(W/2+160, y); ctx.stroke();
+  y += 54;
 
-  const noteTiers = [
-    ['TOP', d.topNotes],
-    ['MIDDLE', d.middleNotes],
-    ['BASE', d.baseNotes],
-  ];
+  const bodyFont = '400 26px "Archivo", sans-serif';
+  const labelFont = '600 20px "IBM Plex Mono", monospace';
+  const noteTiers = [['TOP NOTES', d.topNotes], ['MIDDLE NOTES', d.middleNotes], ['BASE NOTES', d.baseNotes]];
+  ctx.textAlign = 'left';
   for(const [label, list] of noteTiers){
     if(!list || !list.length) continue;
-    ctx.fillStyle = '#C2603E'; ctx.font = '600 22px "IBM Plex Mono", monospace';
-    ctx.fillText(label, W/2, y); y += 40;
-    ctx.fillStyle = '#F3EEE3'; ctx.font = '400 27px "Archivo", sans-serif';
-    y = wrapCanvasText(ctx, list.join(', '), W/2, y, 820, 36) + 26;
+    ctx.font = bodyFont;
+    const lines = wrapLines(ctx, list.join(', '), CARD_W - PAD_X*2);
+    const lineH = 35, labelH = 34;
+    const cardH = PAD_Y*2 + labelH + lines.length*lineH;
+    ctx.fillStyle = CARD_BG;
+    roundRectPath(ctx, CARD_X, y, CARD_W, cardH, 18); ctx.fill();
+    ctx.strokeStyle = CARD_BORDER; ctx.lineWidth = 1;
+    roundRectPath(ctx, CARD_X, y, CARD_W, cardH, 18); ctx.stroke();
+    let ty = y + PAD_Y + 20;
+    ctx.fillStyle = ACCENT; ctx.font = labelFont;
+    ctx.fillText(label, CARD_X + PAD_X, ty);
+    ty += labelH;
+    ctx.fillStyle = INK; ctx.font = bodyFont;
+    for(const line of lines){ ctx.fillText(line, CARD_X + PAD_X, ty); ty += lineH; }
+    y += cardH + 22;
   }
-  y += 4;
+  y += 14;
 
-  const emDash = String.fromCharCode(8212);
   const rows = [
     ['SEASON', (d.season||[]).join(', ')||emDash],
     ['OCCASION', (d.occasion||[]).join(', ')||emDash],
@@ -2072,33 +2093,53 @@ async function buildShareCanvas(d){
     ['PROJECTION', d.projection||emDash],
     ['LONGEVITY', d.longevity||emDash],
   ];
-  y += 10;
-  for(const [label,val] of rows){
+  const rowH = 60;
+  const statsCardH = PAD_Y*2 + rows.length*rowH - (rowH - 40);
+  ctx.fillStyle = CARD_BG;
+  roundRectPath(ctx, CARD_X, y, CARD_W, statsCardH, 18); ctx.fill();
+  ctx.strokeStyle = CARD_BORDER; ctx.lineWidth = 1;
+  roundRectPath(ctx, CARD_X, y, CARD_W, statsCardH, 18); ctx.stroke();
+  let ry = y + PAD_Y + 20;
+  rows.forEach(([label, val], i)=>{
     ctx.textAlign = 'left';
-    ctx.fillStyle = '#8C8370'; ctx.font = '600 22px "IBM Plex Mono", monospace';
-    ctx.fillText(label, W/2-340, y);
+    ctx.fillStyle = FAINT; ctx.font = labelFont;
+    ctx.fillText(label, CARD_X + PAD_X, ry);
     ctx.textAlign = 'right';
-    ctx.fillStyle = '#F3EEE3'; ctx.font = '400 26px "Archivo", sans-serif';
-    ctx.fillText(val, W/2+340, y);
-    y += 50;
-  }
+    ctx.fillStyle = INK; ctx.font = '400 25px "Archivo", sans-serif';
+    ctx.fillText(val, CARD_X + CARD_W - PAD_X, ry);
+    if(i < rows.length-1){
+      ctx.strokeStyle = 'rgba(255,255,255,0.07)';
+      ctx.beginPath(); ctx.moveTo(CARD_X+PAD_X, ry+20); ctx.lineTo(CARD_X+CARD_W-PAD_X, ry+20); ctx.stroke();
+    }
+    ry += rowH;
+  });
+  y += statsCardH + 20;
   ctx.textAlign = 'center';
 
   if(d.personalNotes){
-    y += 20;
-    ctx.fillStyle = '#A79D8B'; ctx.font = 'italic 400 28px "Bodoni Moda", serif';
+    y += 24;
+    ctx.fillStyle = MUTED; ctx.font = 'italic 400 26px "Bodoni Moda", serif';
     const lq = String.fromCharCode(8220), rq = String.fromCharCode(8221);
-    y = wrapCanvasText(ctx, lq + d.personalNotes + rq, W/2, y, 780, 40);
+    for(const line of wrapLines(ctx, lq + d.personalNotes + rq, 780)){ ctx.fillText(line, W/2, y); y += 38; }
   }
 
-  ctx.fillStyle = '#C2603E'; ctx.font = '600 26px "Archivo", sans-serif';
-  ctx.fillText('BUY NOW', W/2, H-190);
+  const bottomBlockH = 190;
+  const finalH = Math.max(1500, Math.min(MAX_H, Math.round(y + bottomBlockH)));
+
+  ctx.fillStyle = ACCENT;
+  ctx.font = '600 27px "Archivo", sans-serif';
+  ctx.fillText('BUY NOW', W/2, finalH - 120);
+  ctx.strokeStyle = ACCENT; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(W/2-96, finalH-100); ctx.lineTo(W/2+96, finalH-100); ctx.stroke();
 
   ctx.fillStyle = 'rgba(243,238,227,0.35)';
-  ctx.font = '400 22px "IBM Plex Mono", monospace';
-  ctx.fillText(location.hostname || "bensfragrance.vercel.app", W/2, H-80);
+  ctx.font = '400 21px "IBM Plex Mono", monospace';
+  ctx.fillText(location.hostname || "bensfragrance.vercel.app", W/2, finalH - 50);
 
-  return canvas;
+  const out = document.createElement('canvas');
+  out.width = W; out.height = finalH;
+  out.getContext('2d').drawImage(canvas, 0, 0, W, finalH, 0, 0, W, finalH);
+  return out;
 }
 async function shareFragranceToStory(d){
   const btn = document.getElementById('drawerShare');
