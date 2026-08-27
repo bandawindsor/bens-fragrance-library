@@ -114,7 +114,6 @@
   .lhero-row.r3{z-index:3;}
   .ch{display:inline-block;will-change:transform;}
   .lhero-foot{display:flex;align-items:flex-end;gap:clamp(2rem,5vw,4.5rem);margin-top:clamp(2.2rem,5vh,3.4rem);position:relative;z-index:4;}
-  .lhero-tag{font-family:var(--font-body);font-size:clamp(.92rem,1.05vw,1.02rem);line-height:1.65;color:var(--ink-muted);max-width:30ch;margin:0;padding-bottom:.3rem;}
   /* height-driven so the bottles can never clip against the hero's overflow,
      centred with auto margins rather than a transform so GSAP's intro tween
      (which animates y/scale) has the transform channel to itself. 4/5 matches
@@ -165,29 +164,6 @@
   .index-desc{display:block;margin-top:.35rem;font-size:.85rem;color:var(--ink-muted);max-width:52ch;}
   .index-arrow{color:var(--ink-faint);transition:color .3s ease, transform .35s cubic-bezier(.16,1,.3,1);}
   .index-row:hover .index-arrow{color:var(--accent);transform:translateX(6px);}
-  .index-preview{position:fixed;left:0;top:0;width:220px;aspect-ratio:4/5;z-index:70;pointer-events:none;opacity:0;visibility:hidden;overflow:hidden;background:var(--surface-2);border:1px solid var(--line-strong);}
-  .index-preview img{width:100%;height:100%;object-fit:contain;padding:10%;filter:var(--photo-grade);}
-  @media (hover:none), (max-width:860px){ .index-preview{display:none;} }
-  /* ---------- shelf (landing horizontal showcase) ---------- */
-  .shelf{position:relative;overflow:hidden;background:var(--surface);border-top:1px solid var(--line);border-bottom:1px solid var(--line);}
-  .shelf-head{padding:clamp(2.6rem,5vw,3.8rem) 0 clamp(1.6rem,3vw,2.2rem);}
-  .shelf-head h2{font-size:clamp(1.9rem,3.4vw,2.7rem);font-style:italic;max-width:18ch;}
-  .shelf-track{display:flex;align-items:flex-start;gap:1.6rem;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:0 clamp(1.1rem,3vw,2.5rem) clamp(3.2rem,6vw,4.6rem);}
-  .shelf-track::-webkit-scrollbar{display:none;}
-  .shelf-item{flex:0 0 auto;scroll-snap-align:start;width:min(62vw,300px);display:flex;flex-direction:column;gap:.9rem;}
-  .shelf-photo{aspect-ratio:4/5;background:var(--surface-2);border:1px solid var(--line);overflow:hidden;position:relative;transition:border-color .3s ease;}
-  .shelf-item:hover .shelf-photo{border-color:var(--accent);}
-  .shelf-photo img{width:100%;height:100%;object-fit:contain;padding:12%;filter:var(--photo-grade);transition:transform .6s cubic-bezier(.16,1,.3,1);}
-  .shelf-item:hover .shelf-photo img{transform:scale(1.06);}
-  .shelf-name{display:flex;flex-direction:column;gap:.15rem;}
-  .shelf-name .brand{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);}
-  .shelf-name .name{font-family:var(--font-display);font-style:italic;font-size:1.15rem;color:var(--ink);transition:color .25s ease;}
-  .shelf-item:hover .shelf-name .name{color:var(--accent);}
-  .shelf-cta{width:min(62vw,240px);aspect-ratio:4/5;flex-direction:column;align-items:flex-start;justify-content:flex-end;gap:.6rem;border:1px solid var(--line-strong);padding:1.4rem;color:var(--ink);font-family:var(--font-mono);font-size:.8rem;letter-spacing:.04em;transition:border-color .3s ease,color .3s ease;}
-  .shelf-cta:hover{border-color:var(--accent);color:var(--accent);}
-  .shelf-cta-arrow{display:flex;transition:transform .3s cubic-bezier(.16,1,.3,1);}
-  .shelf-cta:hover .shelf-cta-arrow{transform:translateX(4px);}
-
   .marquee{position:relative;z-index:2;border-top:1px solid var(--line);border-bottom:1px solid var(--line);overflow:hidden;background:var(--surface);}
   .marquee-track{display:flex;width:max-content;animation:marqueeScroll 42s linear infinite;}
   .marquee-track span{font-family:var(--font-display);font-style:italic;font-size:1.3rem;color:var(--ink-faint);padding:1rem 2.2rem;white-space:nowrap;border-right:1px solid var(--line);}
@@ -199,7 +175,6 @@
     .lhero-media{position:relative;top:auto;bottom:auto;right:auto;height:auto;width:min(86vw,420px);margin:2.4rem auto 0;}
     .lhero-row.r2{margin-left:clamp(1rem,6vw,3rem);}
     .lhero-foot{flex-direction:column;align-items:flex-start;gap:1.6rem;}
-    .lhero-tag{text-align:left;padding-bottom:0;max-width:44ch;}
   }
 
   /* ---------- stat strip ---------- */
@@ -811,20 +786,10 @@ function emptyState(msg){
 
 /* ============ VIEW: LANDING ============ */
 const LANDING_HERO_IMAGE = "images/hero.webp";
-function shelfPicks(){
-  const withImg = DATA.filter(d=>d.image);
-  if(!withImg.length) return [];
-  const n = Math.min(7, withImg.length);
-  const step = Math.max(1, Math.floor(withImg.length / n));
-  const picks = [];
-  for(let i=0; i<withImg.length && picks.length<n; i+=step){ picks.push(withImg[i]); }
-  return picks;
-}
 const MANIFESTO_TEXT = "Every bottle, logged note by note. What to wear in the rain, what survives a long day, what layers with what. Not a shop. *A record of taste.*";
 function renderLanding(){
   const chars = (text) => text.split('').map(c => c===' ' ? `<span class="ch">&nbsp;</span>` : `<span class="ch">${esc(c)}</span>`).join('');
   const marqueeItems = BRANDS.map(b=>`<span><b>House</b>${esc(b)}</span>`).join('');
-  const shelfItems = shelfPicks();
   const manifesto = MANIFESTO_TEXT.split('*').map((seg,si)=>
     seg.split(' ').filter(Boolean).map(w=>`<span class="mw${si%2?' acc':''}">${esc(w)}</span>`).join(' ')
   ).filter(Boolean).join(' ');
@@ -843,30 +808,12 @@ function renderLanding(){
       </div>
       <div class="lhero-foot">
         <a href="#/home" class="lhero-cta" data-magnetic>Enter the archive <span class="lhero-cta-arrow">${ICONS.arrow}</span></a>
-        <p class="lhero-tag">Every bottle in the cabinet, catalogued by note, mood and season, so the right scent is never a guess.</p>
       </div>
     </div>
   </section>
   <section class="manifesto">
     <div class="wrap"><p class="manifesto-text">${manifesto}</p></div>
   </section>
-  ${shelfItems.length ? `
-  <section class="shelf">
-    <div class="shelf-head wrap">
-      <h2>A walk down the cabinet.</h2>
-    </div>
-    <div class="shelf-track">
-      ${shelfItems.map(d=>`
-        <a class="shelf-item" href="#" data-open="${d.id}">
-          <div class="shelf-photo"><img src="${esc(d.image)}" alt="${esc(d.brand)} ${esc(d.name)}" loading="lazy" /></div>
-          <div class="shelf-name"><span class="brand">${esc(d.brand)}</span><span class="name">${esc(d.name)}</span></div>
-        </a>`).join('')}
-      <a class="shelf-item shelf-cta" href="#/catalogue">
-        <span>Browse the full catalogue</span>
-        <span class="shelf-cta-arrow">${ICONS.arrow}</span>
-      </a>
-    </div>
-  </section>` : ''}
   <div class="numbers">
     <div class="wrap">
       <div class="num-cell"><span class="n" data-countup="${DATA.length}">0</span><span class="l">Fragrances</span></div>
@@ -937,20 +884,16 @@ function renderHome(){
         <p>Every way into the library, in one place.</p>
       </div>
       <div class="index-list">
-        ${MENU_TILES.map((t,i)=>{
-          const withImg = DATA.filter(d=>d.image);
-          const pv = withImg.length ? withImg[(i*13) % withImg.length].image : '';
-          return `
-          <a class="index-row reveal-io" style="--d:${i}" href="${t.href}" data-preview="${esc(pv)}">
+        ${MENU_TILES.map((t,i)=>`
+          <a class="index-row reveal-io" style="--d:${i}" href="${t.href}">
             <span class="index-n">${t.n}</span>
             <span class="index-main">
               <span class="index-title">${esc(t.title)}</span>
               <span class="index-desc">${esc(t.desc)}</span>
             </span>
             <span class="index-arrow">${ICONS.arrow}</span>
-          </a>`;}).join('')}
+          </a>`).join('')}
       </div>
-      <div class="index-preview" id="indexPreview" aria-hidden="true"><img alt="" /></div>
     </div>
   </section>
 
@@ -2369,7 +2312,7 @@ function initLandingMotion(){
     if(media){
       intro.from(media, {autoAlpha:0, y:36, scale:1.05, duration:1.1, ease:'power3.out'}, 0.35);
     }
-    intro.from(hero.querySelectorAll('.lhero-kicker, .lhero-tag, .lhero-cta'), {autoAlpha:0, y:16, duration:0.7, ease:'power3.out', stagger:0.09, clearProps:'opacity,visibility,transform'}, 0.55);
+    intro.from(hero.querySelectorAll('.lhero-kicker, .lhero-cta'), {autoAlpha:0, y:16, duration:0.7, ease:'power3.out', stagger:0.09, clearProps:'opacity,visibility,transform'}, 0.55);
   }
   const man = document.querySelector('.manifesto-text');
   if(man){
@@ -2385,30 +2328,6 @@ function initLandingMotion(){
   }
 }
 
-/* home page editorial index: a small floating bottle preview follows the
-   cursor while a row is hovered. Desktop pointer devices only. */
-function initIndexPreview(){
-  const prev = document.getElementById('indexPreview');
-  if(!prev || REDUCE_MOTION || !window.gsap) return;
-  if(!window.matchMedia('(hover: hover) and (min-width: 860px)').matches) return;
-  const img = prev.querySelector('img');
-  const qx = gsap.quickTo(prev, 'x', {duration:0.4, ease:'power3.out'});
-  const qy = gsap.quickTo(prev, 'y', {duration:0.4, ease:'power3.out'});
-  gsap.set(prev, {yPercent:-50, autoAlpha:0, scale:0.94});
-  document.querySelectorAll('.index-row').forEach(row=>{
-    row.addEventListener('pointerenter', (e)=>{
-      const src = row.getAttribute('data-preview');
-      if(!src) return;
-      img.src = src;
-      qx(e.clientX + 36); qy(e.clientY);
-      gsap.to(prev, {autoAlpha:1, scale:1, duration:0.35, ease:'power3.out', overwrite:'auto'});
-    });
-    row.addEventListener('pointermove', (e)=>{ qx(e.clientX + 36); qy(e.clientY); });
-    row.addEventListener('pointerleave', ()=>{
-      gsap.to(prev, {autoAlpha:0, scale:0.94, duration:0.3, ease:'power2.in', overwrite:'auto'});
-    });
-  });
-}
 
 
 /* tilt + spotlight, delegated so it survives re-renders without rebinding */
@@ -2465,7 +2384,6 @@ function bindMain(){
   const main = document.getElementById('main');
   initObservers(main);
   initLandingMotion();
-  initIndexPreview();
 
   main.querySelectorAll('[data-open]').forEach(el=>{
     el.addEventListener('click', e=>{ e.preventDefault(); openDrawer(el.getAttribute('data-open')); });
