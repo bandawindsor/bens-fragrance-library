@@ -122,6 +122,29 @@
   .hero-photo-disc{position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center;transform:perspective(1200px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .3s cubic-bezier(.16,1,.3,1);z-index:1;}
   .hero-photo-disc img{width:94%;height:94%;object-fit:contain;filter:var(--photo-grade) drop-shadow(0 40px 60px rgba(0,0,0,.55)) drop-shadow(0 4px 12px rgba(0,0,0,.3));transition:transform .6s cubic-bezier(.16,1,.3,1);}
   .hero-photo:hover .hero-photo-disc img{transform:scale(1.035);}
+  /* ---------- shelf (landing horizontal showcase) ---------- */
+  .shelf{position:relative;overflow:hidden;background:var(--surface);border-top:1px solid var(--line);border-bottom:1px solid var(--line);}
+  .shelf-head{padding:clamp(2.6rem,5vw,3.8rem) 0 clamp(1.6rem,3vw,2.2rem);}
+  .shelf-head h2{font-size:clamp(1.9rem,3.4vw,2.7rem);font-style:italic;max-width:18ch;}
+  .shelf-track{display:flex;align-items:flex-start;gap:1.6rem;width:max-content;padding:0 clamp(1.1rem,3vw,2.5rem) clamp(3.2rem,6vw,4.6rem);will-change:transform;}
+  .shelf-item{flex:0 0 auto;width:min(62vw,300px);display:flex;flex-direction:column;gap:.9rem;}
+  .shelf-photo{aspect-ratio:4/5;background:var(--surface-2);border:1px solid var(--line);overflow:hidden;position:relative;transition:border-color .3s ease;}
+  .shelf-item:hover .shelf-photo{border-color:var(--accent);}
+  .shelf-photo img{width:100%;height:100%;object-fit:contain;padding:12%;filter:var(--photo-grade);transition:transform .6s cubic-bezier(.16,1,.3,1);}
+  .shelf-item:hover .shelf-photo img{transform:scale(1.06);}
+  .shelf-name{display:flex;flex-direction:column;gap:.15rem;}
+  .shelf-name .brand{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);}
+  .shelf-name .name{font-family:var(--font-display);font-style:italic;font-size:1.15rem;color:var(--ink);transition:color .25s ease;}
+  .shelf-item:hover .shelf-name .name{color:var(--accent);}
+  .shelf-cta{width:min(62vw,240px);aspect-ratio:4/5;flex-direction:column;align-items:flex-start;justify-content:flex-end;gap:.6rem;border:1px solid var(--line-strong);padding:1.4rem;color:var(--ink);font-family:var(--font-mono);font-size:.8rem;letter-spacing:.04em;transition:border-color .3s ease,color .3s ease;}
+  .shelf-cta:hover{border-color:var(--accent);color:var(--accent);}
+  .shelf-cta-arrow{display:flex;transition:transform .3s cubic-bezier(.16,1,.3,1);}
+  .shelf-cta:hover .shelf-cta-arrow{transform:translateX(4px);}
+  @media (max-width:859px){
+    .shelf-track{overflow-x:auto;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;}
+    .shelf-item{scroll-snap-align:start;}
+  }
+
   .marquee{position:relative;z-index:2;border-top:1px solid var(--line);border-bottom:1px solid var(--line);overflow:hidden;background:var(--surface);}
   .marquee-track{display:flex;width:max-content;animation:marqueeScroll 42s linear infinite;}
   .marquee-track span{font-family:var(--font-display);font-style:italic;font-size:1.3rem;color:var(--ink-faint);padding:1rem 2.2rem;white-space:nowrap;border-right:1px solid var(--line);}
@@ -756,16 +779,28 @@ function emptyState(msg){
 
 /* ============ VIEW: LANDING ============ */
 const LANDING_HERO_IMAGE = "images/hero.webp";
+function shelfPicks(){
+  const withImg = DATA.filter(d=>d.image);
+  if(!withImg.length) return [];
+  const n = Math.min(7, withImg.length);
+  const step = Math.max(1, Math.floor(withImg.length / n));
+  const picks = [];
+  for(let i=0; i<withImg.length && picks.length<n; i+=step){ picks.push(withImg[i]); }
+  return picks;
+}
 function renderLanding(){
   const word = (w) => `<span class="word"><span>${esc(w)}</span></span>`;
 
   const marqueeItems = BRANDS.map(b=>`<span><b>House</b>${esc(b)}</span>`).join('');
+  const shelfItems = shelfPicks();
 
   return `
   <section class="hero landing-hero">
-    <div class="hero-watermark" aria-hidden="true">${DATA.length}</div>
+    <div class="hero-watermark" aria-hidden="true"><span class="hero-watermark-num">${DATA.length}</span></div>
     <div class="hero-photo reveal d1" data-tilt>
-      <div class="hero-photo-disc"><img src="${LANDING_HERO_IMAGE}" alt="Selection of bottles from the collection" /></div>
+      <div class="hero-photo-parallax">
+        <div class="hero-photo-disc"><img src="${LANDING_HERO_IMAGE}" alt="Selection of bottles from the collection" /></div>
+      </div>
     </div>
     <div class="wrap hero-copy">
       <div class="hero-kicker reveal-io"><span class="rule"></span><span class="hero-count" data-countup="${DATA.length}">0</span> Indonesia local fragrances in the collection</div>
@@ -784,6 +819,23 @@ function renderLanding(){
       </div>
     </div>
   </section>
+  ${shelfItems.length ? `
+  <section class="shelf">
+    <div class="shelf-head wrap">
+      <h2>A walk down the cabinet.</h2>
+    </div>
+    <div class="shelf-track">
+      ${shelfItems.map(d=>`
+        <a class="shelf-item" href="#" data-open="${d.id}">
+          <div class="shelf-photo"><img src="${esc(d.image)}" alt="${esc(d.brand)} ${esc(d.name)}" loading="lazy" /></div>
+          <div class="shelf-name"><span class="brand">${esc(d.brand)}</span><span class="name">${esc(d.name)}</span></div>
+        </a>`).join('')}
+      <a class="shelf-item shelf-cta" href="#/catalogue">
+        <span>Browse the full catalogue</span>
+        <span class="shelf-cta-arrow">${ICONS.arrow}</span>
+      </a>
+    </div>
+  </section>` : ''}
   <div class="marquee"><div class="marquee-track">${marqueeItems}${marqueeItems}</div></div>`;
 }
 
@@ -2177,7 +2229,10 @@ function runCountUp(el){
   function tick(now){
     const p = Math.min(1, (now-start)/dur);
     el.textContent = Math.round(target * easeOutExpo(p));
-    if(p<1) requestAnimationFrame(tick);
+    if(p<1){ requestAnimationFrame(tick); }
+    else if(window.gsap){
+      gsap.fromTo(el, {scale:1}, {scale:1.1, duration:0.16, ease:'power2.out', yoyo:true, repeat:1, transformOrigin:'left center'});
+    }
   }
   requestAnimationFrame(tick);
 }
@@ -2245,6 +2300,57 @@ function initObservers(root){
   }
 }
 
+/* subtle scroll-scrub depth on the landing hero's watermark numeral and photo.
+   both animate a dedicated inner wrapper so GSAP's transform never fights the
+   CSS transforms already used for centering (.hero-watermark/.hero-photo) and
+   the pointer tilt (.hero-photo-disc). */
+function initHeroParallax(){
+  if(REDUCE_MOTION || !window.gsap) return;
+  const heroSection = document.querySelector('.landing-hero');
+  if(!heroSection) return;
+  const wm = heroSection.querySelector('.hero-watermark-num');
+  const photo = heroSection.querySelector('.hero-photo-parallax');
+  const base = { trigger: heroSection, start: 'top top', end: 'bottom top', scrub: 0.6 };
+  if(wm){
+    const t = gsap.to(wm, {y: 70, ease: 'none', scrollTrigger: {...base}});
+    scrollTriggers.push(t.scrollTrigger);
+  }
+  if(photo){
+    const t = gsap.to(photo, {y: -46, ease: 'none', scrollTrigger: {...base}});
+    scrollTriggers.push(t.scrollTrigger);
+  }
+}
+
+/* horizontal "shelf" pan on the landing page: pins the section and pans the
+   track sideways as the user scrolls, so the bottle showcase reads like
+   flipping across a physical shelf. Desktop only (matchMedia) - below 860px
+   it's a plain native horizontal-scroll row instead, since scroll-hijacking
+   fights touch scrolling on mobile. */
+let shelfMM = null;
+function initShelfPan(){
+  if(shelfMM){ shelfMM.revert(); shelfMM = null; }
+  const wrap = document.querySelector('.shelf');
+  const track = document.querySelector('.shelf-track');
+  if(!wrap || !track || REDUCE_MOTION || !window.gsap) return;
+  shelfMM = gsap.matchMedia();
+  shelfMM.add('(min-width: 860px)', () => {
+    const distance = () => Math.max(0, track.scrollWidth - wrap.clientWidth);
+    const tween = gsap.to(track, {
+      x: () => -distance(),
+      ease: 'none',
+      scrollTrigger: {
+        trigger: wrap,
+        start: 'top top',
+        end: () => '+=' + distance(),
+        pin: true,
+        scrub: 0.7,
+        invalidateOnRefresh: true
+      }
+    });
+    return () => tween.kill();
+  });
+}
+
 /* tilt + spotlight, delegated so it survives re-renders without rebinding */
 if(!REDUCE_MOTION){
   const tiltInited = new WeakSet();
@@ -2298,6 +2404,8 @@ if(!REDUCE_MOTION){
 function bindMain(){
   const main = document.getElementById('main');
   initObservers(main);
+  initHeroParallax();
+  initShelfPan();
 
   main.querySelectorAll('[data-open]').forEach(el=>{
     el.addEventListener('click', e=>{ e.preventDefault(); openDrawer(el.getAttribute('data-open')); });
