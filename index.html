@@ -111,13 +111,18 @@
   .lhero-row.r1{z-index:1;}
   .lhero-row.r2{z-index:3;margin-left:clamp(2rem,9vw,8.5rem);}
   .lhero-row.r2 .lhero-ln{font-style:italic;color:var(--accent);}
-  .lhero-row.r3{z-index:3;display:flex;align-items:flex-end;gap:clamp(1.5rem,4vw,4rem);}
+  .lhero-row.r3{z-index:3;}
   .ch{display:inline-block;will-change:transform;}
-  .lhero-tag{font-family:var(--font-body);font-size:clamp(.92rem,1.1vw,1.05rem);line-height:1.6;color:var(--ink-muted);max-width:30ch;padding-bottom:1em;}
-  .lhero-media{position:absolute;top:9%;right:clamp(0px,4vw,4rem);width:min(31vw,430px);aspect-ratio:3/4;z-index:2;}
+  .lhero-foot{display:flex;align-items:flex-end;gap:clamp(2rem,5vw,4.5rem);margin-top:clamp(2.2rem,5vh,3.4rem);position:relative;z-index:4;}
+  .lhero-tag{font-family:var(--font-body);font-size:clamp(.92rem,1.05vw,1.02rem);line-height:1.65;color:var(--ink-muted);max-width:30ch;margin:0;padding-bottom:.3rem;}
+  /* height-driven so the bottles can never clip against the hero's overflow,
+     centred with auto margins rather than a transform so GSAP's intro tween
+     (which animates y/scale) has the transform channel to itself. 4/5 matches
+     the source image exactly, so contain-fitting wastes no space. */
+  .lhero-media{position:absolute;top:0;bottom:0;margin:auto 0;right:0;height:clamp(340px,92vh,760px);aspect-ratio:4/5;width:auto;z-index:2;}
   .lhero-media-inner{width:100%;height:100%;display:flex;align-items:center;justify-content:center;transform:perspective(1200px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .3s cubic-bezier(.16,1,.3,1);}
   .lhero-media-inner img{width:100%;height:100%;object-fit:contain;filter:var(--photo-grade) drop-shadow(0 44px 70px rgba(0,0,0,.6)) drop-shadow(0 4px 14px rgba(0,0,0,.35));}
-  .lhero-cta{display:inline-flex;align-items:center;gap:.7rem;margin-top:clamp(2.2rem,5vh,3.6rem);font-family:var(--font-mono);font-size:.8rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--ink);padding-bottom:.55rem;border-bottom:1px solid var(--line-strong);transition:border-color .3s ease,color .3s ease,gap .3s ease;}
+  .lhero-cta{display:inline-flex;align-items:center;gap:.7rem;flex-shrink:0;font-family:var(--font-mono);font-size:.8rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--ink);padding-bottom:.55rem;border-bottom:1px solid var(--line-strong);transition:border-color .3s ease,color .3s ease,gap .3s ease;}
   .lhero-cta:hover{border-color:var(--accent);color:var(--accent);gap:1rem;}
   .lhero-cta-arrow{display:flex;transition:transform .3s cubic-bezier(.16,1,.3,1);}
   .lhero-cta:hover .lhero-cta-arrow{transform:translateX(4px);}
@@ -167,8 +172,9 @@
   .shelf{position:relative;overflow:hidden;background:var(--surface);border-top:1px solid var(--line);border-bottom:1px solid var(--line);}
   .shelf-head{padding:clamp(2.6rem,5vw,3.8rem) 0 clamp(1.6rem,3vw,2.2rem);}
   .shelf-head h2{font-size:clamp(1.9rem,3.4vw,2.7rem);font-style:italic;max-width:18ch;}
-  .shelf-track{display:flex;align-items:flex-start;gap:1.6rem;width:max-content;padding:0 clamp(1.1rem,3vw,2.5rem) clamp(3.2rem,6vw,4.6rem);will-change:transform;}
-  .shelf-item{flex:0 0 auto;width:min(62vw,300px);display:flex;flex-direction:column;gap:.9rem;}
+  .shelf-track{display:flex;align-items:flex-start;gap:1.6rem;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:0 clamp(1.1rem,3vw,2.5rem) clamp(3.2rem,6vw,4.6rem);}
+  .shelf-track::-webkit-scrollbar{display:none;}
+  .shelf-item{flex:0 0 auto;scroll-snap-align:start;width:min(62vw,300px);display:flex;flex-direction:column;gap:.9rem;}
   .shelf-photo{aspect-ratio:4/5;background:var(--surface-2);border:1px solid var(--line);overflow:hidden;position:relative;transition:border-color .3s ease;}
   .shelf-item:hover .shelf-photo{border-color:var(--accent);}
   .shelf-photo img{width:100%;height:100%;object-fit:contain;padding:12%;filter:var(--photo-grade);transition:transform .6s cubic-bezier(.16,1,.3,1);}
@@ -181,10 +187,6 @@
   .shelf-cta:hover{border-color:var(--accent);color:var(--accent);}
   .shelf-cta-arrow{display:flex;transition:transform .3s cubic-bezier(.16,1,.3,1);}
   .shelf-cta:hover .shelf-cta-arrow{transform:translateX(4px);}
-  @media (max-width:859px){
-    .shelf-track{overflow-x:auto;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;}
-    .shelf-item{scroll-snap-align:start;}
-  }
 
   .marquee{position:relative;z-index:2;border-top:1px solid var(--line);border-bottom:1px solid var(--line);overflow:hidden;background:var(--surface);}
   .marquee-track{display:flex;width:max-content;animation:marqueeScroll 42s linear infinite;}
@@ -194,10 +196,10 @@
   @media (prefers-reduced-motion: reduce){ .marquee-track{animation:none;} }
   @media (max-width:859px){
     .lhero{min-height:auto;padding-top:3rem;}
-    .lhero-media{position:relative;top:auto;right:auto;width:min(72vw,330px);margin:2.6rem auto 0;}
+    .lhero-media{position:relative;top:auto;bottom:auto;right:auto;height:auto;width:min(86vw,420px);margin:2.4rem auto 0;}
     .lhero-row.r2{margin-left:clamp(1rem,6vw,3rem);}
-    .lhero-row.r3{flex-direction:column;align-items:flex-start;gap:1.4rem;}
-    .lhero-tag{padding-bottom:0;max-width:44ch;}
+    .lhero-foot{flex-direction:column;align-items:flex-start;gap:1.6rem;}
+    .lhero-tag{text-align:left;padding-bottom:0;max-width:44ch;}
   }
 
   /* ---------- stat strip ---------- */
@@ -834,12 +836,15 @@ function renderLanding(){
       <h1 class="lhero-title" aria-label="Ben's Fragrance Library">
         <span class="lhero-row r1" aria-hidden="true"><span class="lhero-ln">${chars("Ben's")}</span></span>
         <span class="lhero-row r2" aria-hidden="true"><span class="lhero-ln">${chars('Fragrance')}</span></span>
-        <span class="lhero-row r3" aria-hidden="true"><span class="lhero-ln">${chars('Library')}</span><span class="lhero-tag">Every bottle in the cabinet, catalogued by note, mood and season, so the right scent is never a guess.</span></span>
+        <span class="lhero-row r3" aria-hidden="true"><span class="lhero-ln">${chars('Library')}</span></span>
       </h1>
       <div class="lhero-media" data-tilt>
         <div class="lhero-media-inner"><img src="${LANDING_HERO_IMAGE}" alt="Selection of bottles from the collection" /></div>
       </div>
-      <a href="#/home" class="lhero-cta" data-magnetic>Enter the archive <span class="lhero-cta-arrow">${ICONS.arrow}</span></a>
+      <div class="lhero-foot">
+        <a href="#/home" class="lhero-cta" data-magnetic>Enter the archive <span class="lhero-cta-arrow">${ICONS.arrow}</span></a>
+        <p class="lhero-tag">Every bottle in the cabinet, catalogued by note, mood and season, so the right scent is never a guess.</p>
+      </div>
     </div>
   </section>
   <section class="manifesto">
@@ -2345,10 +2350,11 @@ function initObservers(root){
   }
 }
 
-/* landing page choreography: char-level hero reveal, scroll-scrub shear on the
-   title rows and media, and the scrubbed manifesto word reveal. The pointer
-   tilt lives on .lhero-media-inner (CSS vars) while GSAP animates the outer
-   .lhero-media, so the two transforms never fight. */
+/* landing page choreography: char-level hero reveal on load, plus a one-shot
+   word reveal on the manifesto when it first enters the viewport. Nothing here
+   is scrubbed or pinned - the page always scrolls at its natural speed. The
+   pointer tilt lives on .lhero-media-inner (CSS vars) while GSAP animates the
+   outer .lhero-media, so the two transforms never fight. */
 function initLandingMotion(){
   if(!window.gsap || REDUCE_MOTION) return;
   const hero = document.querySelector('.lhero');
@@ -2364,26 +2370,17 @@ function initLandingMotion(){
       intro.from(media, {autoAlpha:0, y:36, scale:1.05, duration:1.1, ease:'power3.out'}, 0.35);
     }
     intro.from(hero.querySelectorAll('.lhero-kicker, .lhero-tag, .lhero-cta'), {autoAlpha:0, y:16, duration:0.7, ease:'power3.out', stagger:0.09, clearProps:'opacity,visibility,transform'}, 0.55);
-
-    const rows = hero.querySelectorAll('.lhero-row');
-    const scrub = {trigger: hero, start:'top top', end:'bottom top', scrub:0.6};
-    const shears = [-7, 5, -4];
-    rows.forEach((row,i)=>{
-      const t = gsap.to(row, {xPercent: shears[i] || 0, ease:'none', scrollTrigger:{...scrub}});
-      scrollTriggers.push(t.scrollTrigger);
-    });
-    if(media){
-      const t = gsap.to(media, {y:-70, ease:'none', scrollTrigger:{...scrub}});
-      scrollTriggers.push(t.scrollTrigger);
-    }
   }
   const man = document.querySelector('.manifesto-text');
   if(man){
     const words = man.querySelectorAll('.mw');
     if(words.length){
       gsap.set(words, {opacity:0.13});
-      const t = gsap.to(words, {opacity:1, ease:'none', stagger:0.06, scrollTrigger:{trigger:man, start:'top 78%', end:'bottom 55%', scrub:0.5}});
-      scrollTriggers.push(t.scrollTrigger);
+      const playIn = ()=> gsap.to(words, {opacity:1, duration:0.5, ease:'power2.out', stagger:0.04});
+      if(man.getBoundingClientRect().top < window.innerHeight*0.85){ playIn(); }
+      else {
+        scrollTriggers.push(ScrollTrigger.create({trigger:man, start:'top 85%', once:true, onEnter:playIn}));
+      }
     }
   }
 }
@@ -2413,35 +2410,6 @@ function initIndexPreview(){
   });
 }
 
-/* horizontal "shelf" pan on the landing page: pins the section and pans the
-   track sideways as the user scrolls, so the bottle showcase reads like
-   flipping across a physical shelf. Desktop only (matchMedia) - below 860px
-   it's a plain native horizontal-scroll row instead, since scroll-hijacking
-   fights touch scrolling on mobile. */
-let shelfMM = null;
-function initShelfPan(){
-  if(shelfMM){ shelfMM.revert(); shelfMM = null; }
-  const wrap = document.querySelector('.shelf');
-  const track = document.querySelector('.shelf-track');
-  if(!wrap || !track || REDUCE_MOTION || !window.gsap) return;
-  shelfMM = gsap.matchMedia();
-  shelfMM.add('(min-width: 860px)', () => {
-    const distance = () => Math.max(0, track.scrollWidth - wrap.clientWidth);
-    const tween = gsap.to(track, {
-      x: () => -distance(),
-      ease: 'none',
-      scrollTrigger: {
-        trigger: wrap,
-        start: 'top top',
-        end: () => '+=' + distance(),
-        pin: true,
-        scrub: 0.7,
-        invalidateOnRefresh: true
-      }
-    });
-    return () => tween.kill();
-  });
-}
 
 /* tilt + spotlight, delegated so it survives re-renders without rebinding */
 if(!REDUCE_MOTION){
@@ -2497,7 +2465,6 @@ function bindMain(){
   const main = document.getElementById('main');
   initObservers(main);
   initLandingMotion();
-  initShelfPan();
   initIndexPreview();
 
   main.querySelectorAll('[data-open]').forEach(el=>{
