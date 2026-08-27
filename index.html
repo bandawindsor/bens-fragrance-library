@@ -53,6 +53,8 @@
   ::selection{background:var(--accent-soft);color:var(--accent-strong);}
   :focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
 
+  .grain{position:fixed;inset:0;z-index:60;pointer-events:none;opacity:.05;mix-blend-mode:overlay;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
+
   .wrap{max-width:var(--maxw);margin:0 auto;padding:0 clamp(1.1rem,3vw,2.5rem);}
 
   h1,h2,h3{font-family:var(--font-display);font-weight:500;margin:0;text-wrap:balance;}
@@ -455,8 +457,7 @@
   .nav a.active::after{transform:scaleX(1);}
 
   /* ---------- reveal-on-scroll ---------- */
-  .reveal-io{opacity:0;transform:translateY(18px);transition:opacity .7s cubic-bezier(.16,1,.3,1), transform .7s cubic-bezier(.16,1,.3,1);transition-delay:calc(var(--d,0) * 55ms);}
-  .reveal-io.in-view{opacity:1;transform:translateY(0);}
+  .reveal-io{opacity:0;transform:translateY(18px);}
 
   /* ---------- animated bar fill ---------- */
   .bar-fill{width:0 !important;}
@@ -478,9 +479,6 @@
   body::before{content:'';position:fixed;inset:0;z-index:9000;pointer-events:none;opacity:.035;mix-blend-mode:overlay;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
 
   /* ---------- route transition ---------- */
-  #main{transition:opacity .22s ease, transform .3s cubic-bezier(.16,1,.3,1);}
-  #main.route-leave{opacity:0;transform:translateY(10px);}
-  @media (prefers-reduced-motion: reduce){ #main{transition:none;} }
 
   /* ---------- intro ---------- */
   .intro{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;align-items:center;justify-content:center;transition:opacity .6s ease, visibility .6s ease;}
@@ -538,8 +536,12 @@
 
 <div class="scrim" id="scrim"></div>
 <aside class="drawer" id="drawer" aria-hidden="true"></aside>
+<div class="grain" aria-hidden="true"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/ScrollTrigger.min.js"></script>
 <script>
+gsap.registerPlugin(ScrollTrigger);
 /* ============ ICONS ============ */
 const ICONS = {
   search: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.2" y2="16.2"/></svg>',
@@ -686,16 +688,20 @@ function paintRoute(){
   document.getElementById('mobileNav').classList.remove('open');
   window.scrollTo({top:0});
   bindMain();
-  setTimeout(()=>{ main.classList.remove('route-leave'); }, 20);
 }
 function render(){
   const main = document.getElementById('main');
-  if(REDUCE_MOTION || !main.innerHTML.trim()){
+  if(REDUCE_MOTION || !main.innerHTML.trim() || !window.gsap){
     paintRoute();
     return;
   }
-  main.classList.add('route-leave');
-  setTimeout(paintRoute, 190);
+  gsap.to(main, {
+    opacity: 0, y: 10, duration: 0.18, ease: 'power2.in', overwrite: true,
+    onComplete: () => {
+      paintRoute();
+      gsap.fromTo(main, {opacity:0, y:10}, {opacity:1, y:0, duration:0.42, ease:'power3.out', clearProps:'opacity,transform'});
+    }
+  });
 }
 window.addEventListener('hashchange', render);
 
@@ -2138,12 +2144,19 @@ async function shareFragranceToStory(d){
 function openDrawer(id){
   const d = DATA.find(x=>x.id===Number(id));
   if(!d) return;
-  document.getElementById('drawer').innerHTML = drawerContent(d);
-  document.getElementById('drawer').classList.add('open');
+  const drawer = document.getElementById('drawer');
+  drawer.innerHTML = drawerContent(d);
+  drawer.classList.add('open');
   document.getElementById('scrim').classList.add('open');
   document.getElementById('drawerClose').addEventListener('click', closeDrawer);
   const shareBtn = document.getElementById('drawerShare');
   if(shareBtn) shareBtn.addEventListener('click', ()=>shareFragranceToStory(d));
+  if(!REDUCE_MOTION && window.gsap){
+    const bits = drawer.querySelectorAll('.drawer-image, .drawer-body > *');
+    if(bits.length){
+      gsap.fromTo(bits, {opacity:0, y:14}, {opacity:1, y:0, duration:0.5, ease:'power3.out', stagger:0.045, delay:0.12, overwrite:true});
+    }
+  }
 }
 function closeDrawer(){
   document.getElementById('drawer').classList.remove('open');
@@ -2154,7 +2167,7 @@ document.getElementById('scrim').addEventListener('click', closeDrawer);
 /* ============ EVENT BINDING (re-run after every render) ============ */
 /* ============ MOTION ENGINE ============ */
 const REDUCE_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-let io = null;
+let scrollTriggers = [];
 
 function easeOutExpo(t){ return t===1 ? 1 : 1 - Math.pow(2, -10*t); }
 function runCountUp(el){
@@ -2170,28 +2183,71 @@ function runCountUp(el){
 }
 
 function initObservers(root){
-  if(io) io.disconnect();
-  if(REDUCE_MOTION){
+  scrollTriggers.forEach(t=>t.kill());
+  scrollTriggers = [];
+  if(REDUCE_MOTION || !window.gsap){
     root.querySelectorAll('.reveal-io').forEach(el=>el.classList.add('in-view'));
     root.querySelectorAll('.bar-fill').forEach(el=>el.classList.add('in-view'));
     root.querySelectorAll('[data-countup]').forEach(el=>{ el.textContent = el.getAttribute('data-countup'); });
     return;
   }
-  io = new IntersectionObserver((entries)=>{
-    entries.forEach(entry=>{
-      if(!entry.isIntersecting) return;
-      const el = entry.target;
-      if(el.classList.contains('reveal-io')) el.classList.add('in-view');
-      if(el.classList.contains('bar-fill')) el.classList.add('in-view');
-      if(el.hasAttribute('data-countup')) runCountUp(el);
-      io.unobserve(el);
+  /* ScrollTrigger's onEnter is edge-triggered: it won't fire for elements already
+     inside the trigger zone at creation time (eg. the hero, visible with no scroll
+     yet). Split into "already visible -> animate now" vs "below the fold -> wire
+     a real ScrollTrigger for when the user scrolls to it". */
+  const vh = window.innerHeight;
+  function splitByVisibility(els, thresholdFrac){
+    const immediate = [], deferred = [];
+    els.forEach(el=>{
+      const top = el.getBoundingClientRect().top;
+      (top < vh * thresholdFrac ? immediate : deferred).push(el);
     });
-  }, { threshold: 0.15, rootMargin: '0px 0px -8% 0px' });
-  root.querySelectorAll('.reveal-io, .bar-fill, [data-countup]').forEach(el=>io.observe(el));
+    return {immediate, deferred};
+  }
+
+  const revealEls = Array.from(root.querySelectorAll('.reveal-io'));
+  if(revealEls.length){
+    gsap.set(revealEls, {opacity:0, y:20});
+    const {immediate, deferred} = splitByVisibility(revealEls, 0.88);
+    if(immediate.length){
+      gsap.to(immediate, {opacity:1, y:0, duration:0.8, ease:'power3.out', stagger:0.07, clearProps:'transform'});
+    }
+    deferred.forEach((el, i)=>{
+      scrollTriggers.push(ScrollTrigger.create({
+        trigger: el, start: 'top 88%', once: true,
+        onEnter: () => gsap.to(el, {opacity:1, y:0, duration:0.8, ease:'power3.out', delay:(i%6)*0.05, clearProps:'transform'})
+      }));
+    });
+  }
+
+  const barEls = Array.from(root.querySelectorAll('.bar-fill'));
+  if(barEls.length){
+    const {immediate, deferred} = splitByVisibility(barEls, 0.92);
+    immediate.forEach(el=>el.classList.add('in-view'));
+    deferred.forEach(el=>{
+      scrollTriggers.push(ScrollTrigger.create({
+        trigger: el, start: 'top 92%', once: true,
+        onEnter: () => el.classList.add('in-view')
+      }));
+    });
+  }
+
+  const countEls = Array.from(root.querySelectorAll('[data-countup]'));
+  if(countEls.length){
+    const {immediate, deferred} = splitByVisibility(countEls, 0.94);
+    immediate.forEach(el=>runCountUp(el));
+    deferred.forEach(el=>{
+      scrollTriggers.push(ScrollTrigger.create({
+        trigger: el, start: 'top 94%', once: true,
+        onEnter: () => runCountUp(el)
+      }));
+    });
+  }
 }
 
 /* tilt + spotlight, delegated so it survives re-renders without rebinding */
 if(!REDUCE_MOTION){
+  const tiltInited = new WeakSet();
   document.addEventListener('pointermove', (e)=>{
     const el = e.target.closest && e.target.closest('[data-tilt]');
     if(!el) return;
@@ -2199,13 +2255,25 @@ if(!REDUCE_MOTION){
     const px = (e.clientX - r.left) / r.width, py = (e.clientY - r.top) / r.height;
     el.style.setProperty('--mx', (px*100).toFixed(1) + '%');
     el.style.setProperty('--my', (py*100).toFixed(1) + '%');
-    el.style.setProperty('--ry', ((px-0.5) * 6).toFixed(2) + 'deg');
-    el.style.setProperty('--rx', ((0.5-py) * 6).toFixed(2) + 'deg');
+    if(window.gsap){
+      /* GSAP needs a concrete starting value to interpolate a CSS custom property from;
+         without this the first tween on an uninitialized --rx/--ry resolves to NaN. */
+      if(!tiltInited.has(el)){ gsap.set(el, {'--rx':'0deg', '--ry':'0deg'}); tiltInited.add(el); }
+      gsap.to(el, {
+        '--ry': ((px-0.5) * 6).toFixed(2) + 'deg',
+        '--rx': ((0.5-py) * 6).toFixed(2) + 'deg',
+        duration:0.5, ease:'power3.out', overwrite:true
+      });
+    } else {
+      el.style.setProperty('--ry', ((px-0.5) * 6).toFixed(2) + 'deg');
+      el.style.setProperty('--rx', ((0.5-py) * 6).toFixed(2) + 'deg');
+    }
   }, { passive:true });
   document.addEventListener('pointerleave', (e)=>{
     const el = e.target.closest && e.target.closest('[data-tilt]');
     if(!el) return;
-    el.style.setProperty('--rx','0deg'); el.style.setProperty('--ry','0deg');
+    if(window.gsap) gsap.to(el, {'--rx':'0deg', '--ry':'0deg', duration:0.7, ease:'elastic.out(1, 0.4)', overwrite:true});
+    else { el.style.setProperty('--rx','0deg'); el.style.setProperty('--ry','0deg'); }
   }, true);
 
   /* magnetic buttons */
@@ -2215,12 +2283,14 @@ if(!REDUCE_MOTION){
     const r = el.getBoundingClientRect();
     const mx = (e.clientX - (r.left+r.width/2)) * 0.28;
     const my = (e.clientY - (r.top+r.height/2)) * 0.28;
-    el.style.transform = `translate(${mx.toFixed(1)}px, ${my.toFixed(1)}px)`;
+    if(window.gsap) gsap.to(el, {x:mx, y:my, duration:0.45, ease:'power3.out', overwrite:true});
+    else el.style.transform = `translate(${mx.toFixed(1)}px, ${my.toFixed(1)}px)`;
   }, { passive:true });
   document.addEventListener('pointerleave', (e)=>{
     const el = e.target.closest && e.target.closest('[data-magnetic]');
     if(!el) return;
-    el.style.transform = '';
+    if(window.gsap) gsap.to(el, {x:0, y:0, duration:0.65, ease:'elastic.out(1, 0.35)', overwrite:true});
+    else el.style.transform = '';
   }, true);
 }
 
@@ -2472,9 +2542,16 @@ function softRerenderCatalogue(){
   const results = DATA.filter(matchesFilters).sort(byBrandThenName);
   document.querySelector('.result-count').textContent = results.length + ' of ' + DATA.length;
   const gridWrap = document.querySelector('.wrap:has(.grid), .wrap:has(.empty)');
-  if(gridWrap){
+  if(!gridWrap) return;
+  const doSwap = ()=>{
     gridWrap.innerHTML = results.length ? `<div class="grid">${results.map((d,i)=>card(d,i)).join('')}</div>` : emptyState('No fragrance matches these filters. Try clearing one.');
     bindMain();
+  };
+  const existing = gridWrap.querySelectorAll('.card, .empty');
+  if(REDUCE_MOTION || !existing.length || !window.gsap){
+    doSwap();
+  } else {
+    gsap.to(existing, {opacity:0, y:-6, duration:0.15, ease:'power2.in', stagger:0.01, overwrite:true, onComplete: doSwap});
   }
 }
 
