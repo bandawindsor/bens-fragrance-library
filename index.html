@@ -684,6 +684,9 @@ try{ unlocked = sessionStorage.getItem(UNLOCK_KEY) === '1'; }catch(e){}
 const SEASONS = ['Spring','Summer','Fall','Winter'];
 let DATA, BRANDS, FAMILIES, OCCASIONS, MOODS, ALL_NOTES;
 let dbStatus = 'loading'; // 'loading' | 'live' | 'offline'
+/* set for the one repaint that follows a background data sync, so it lands
+   without animation, intro replay or scroll reset */
+let silentRepaint = false;
 
 function rebuildData(){
   DATA = RAW_DATA.map(d=>({...d, label: d.brand + ' - ' + d.name}));
@@ -697,7 +700,22 @@ function rebuildData(){
 }
 rebuildData();
 
+/* Cheap fingerprint of the collection, used to decide whether a server sync
+   actually changed anything. Deliberately avoids stringifying the records: the
+   images are base64 data URLs, so a naive JSON.stringify would chew through
+   megabytes on every load. Image length is a good enough proxy for a changed
+   photo. */
+function dataSignature(rows){
+  return rows.length + '|' + rows.map(d =>
+    d.id + ':' + d.name + ':' + d.brand +
+    ':' + (d.image ? d.image.length : 0) +
+    ':' + (d.personalNotes || '').length +
+    ':' + (d.topNotes||[]).length + ',' + (d.middleNotes||[]).length + ',' + (d.baseNotes||[]).length
+  ).join('|');
+}
+
 async function syncFromSupabase(){
+  const before = dataSignature(RAW_DATA);
   try{
     const rows = await sbFetchAll();
     if(rows.length){
@@ -711,7 +729,15 @@ async function syncFromSupabase(){
     dbStatus = 'offline';
   }
   rebuildData();
-  render();
+  /* Only repaint when the server genuinely differs from what is already on
+     screen, and when it does, repaint silently. Previously this called render()
+     unconditionally, so every visit painted the page twice: once from the
+     embedded snapshot, then again when the fetch landed, replaying the hero
+     intro and throwing the reader back to the top of the page. */
+  if(dataSignature(RAW_DATA) !== before){
+    silentRepaint = true;
+    render();
+  }
 }
 
 /* deterministic hash -> hue offset for family swatches (analogous to the single accent hue) */
@@ -756,12 +782,16 @@ function paintRoute(){
   const main = document.getElementById('main');
   main.innerHTML = routes[route]();
   document.getElementById('mobileNav').classList.remove('open');
-  window.scrollTo({top:0});
+  /* a background data sync must not yank the reader back to the top */
+  if(!silentRepaint) window.scrollTo({top:0});
   bindMain();
+  silentRepaint = false;
 }
 function render(){
   const main = document.getElementById('main');
-  if(REDUCE_MOTION || !main.innerHTML.trim() || !window.gsap){
+  /* silent repaints swap the markup with no transition, no intro replay and no
+     scroll reset, so a background sync is invisible to the reader */
+  if(silentRepaint || REDUCE_MOTION || !main.innerHTML.trim() || !window.gsap){
     paintRoute();
     return;
   }
@@ -2273,8 +2303,13 @@ function runCountUp(el){
 function initObservers(root){
   scrollTriggers.forEach(t=>t.kill());
   scrollTriggers = [];
-  if(REDUCE_MOTION || !window.gsap){
-    root.querySelectorAll('.reveal-io').forEach(el=>el.classList.add('in-view'));
+  if(silentRepaint || REDUCE_MOTION || !window.gsap){
+    /* .reveal-io sits at opacity 0 waiting for its GSAP entrance. When no tween
+       is coming, clear it inline. This previously toggled an .in-view class
+       whose rule was dropped when the reveals moved to GSAP, which left the
+       whole page invisible under prefers-reduced-motion. .bar-fill still has a
+       real .in-view rule, so that one stays a class toggle. */
+    root.querySelectorAll('.reveal-io').forEach(el=>{ el.style.opacity='1'; el.style.transform='none'; });
     root.querySelectorAll('.bar-fill').forEach(el=>el.classList.add('in-view'));
     root.querySelectorAll('[data-countup]').forEach(el=>{ el.textContent = el.getAttribute('data-countup'); });
     return;
@@ -2339,7 +2374,7 @@ function initObservers(root){
    pointer tilt lives on .lhero-media-inner (CSS vars) while GSAP animates the
    outer .lhero-media, so the two transforms never fight. */
 function initLandingMotion(){
-  if(!window.gsap || REDUCE_MOTION) return;
+  if(!window.gsap || REDUCE_MOTION || silentRepaint) return;
   const hero = document.querySelector('.lhero');
   if(hero){
     const media = hero.querySelector('.lhero-media');
