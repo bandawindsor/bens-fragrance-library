@@ -209,6 +209,11 @@
   }
 
   section{padding:clamp(2.4rem,5vw,3.6rem) 0;}
+  /* Breathing room under the sticky topbar. Every routed page except the
+     landing hero was starting flush against it. The catalogue and A-to-Z index
+     open with their own sticky sub-navs, which are pinned to the topbar by
+     design and so are deliberately not matched here. */
+  #main > .wrap:first-child:not(.az-nav){padding-top:clamp(1.6rem,3vw,2.2rem);}
   .section-head{margin-bottom:1.6rem;}
   .section-head h2{font-size:clamp(1.6rem,2.8vw,2.2rem);font-style:italic;}
   .section-head p{color:var(--ink-muted);margin:.6rem 0 0;max-width:60ch;}
@@ -232,16 +237,6 @@
   }
 
   /* ---------- home menu grid ---------- */
-  .menu-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.9rem;}
-  .menu-tile{position:relative;border:1px solid var(--line);border-radius:var(--radius);padding:1.3rem 1.3rem 1.5rem;background:var(--surface);display:flex;flex-direction:column;gap:.5rem;min-height:150px;transition:box-shadow .25s ease, background .25s ease, transform .25s ease, border-color .25s ease;}
-  .menu-tile:hover{background:var(--surface-2);border-color:var(--accent);}
-  .menu-tile-n{font-family:var(--font-mono);font-size:.72rem;color:var(--ink-faint);}
-  .menu-tile-title{font-family:var(--font-display);font-size:1.15rem;font-style:italic;color:var(--ink);}
-  .menu-tile-desc{font-size:.82rem;color:var(--ink-muted);line-height:1.5;flex:1;}
-  .menu-tile-arrow{align-self:flex-end;color:var(--accent);}
-  .menu-tile-arrow svg{display:block;}
-  @media (max-width:859px){ .menu-grid{grid-template-columns:repeat(2,1fr);} }
-  @media (max-width:560px){ .menu-grid{grid-template-columns:1fr;} }
 
   /* ---------- landing ---------- */
   .is-landing .topbar, .is-landing .footer{display:none;}
@@ -287,9 +282,6 @@
   .card-notes{font-size:.82rem;color:var(--ink-muted);}
   .card-tags{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.15rem;}
   .tag{font-size:.7rem;padding:.2rem .5rem;border-radius:var(--radius);border:1px solid var(--line);color:var(--ink-muted);}
-  .card-foot{margin-top:auto;display:flex;align-items:center;justify-content:space-between;padding-top:.9rem;border-top:1px solid var(--line);margin-top:.8rem;}
-  .card-foot .btn{padding:0;border:0;background:none;box-shadow:none;border-radius:0;color:var(--ink-muted);font-size:.72rem;letter-spacing:.06em;}
-  .card-foot .btn:hover{color:var(--accent);background:none;box-shadow:none;}
 
   .empty{padding:3.5rem 1rem;text-align:center;color:var(--ink-muted);}
   .empty h3{color:var(--ink);margin-bottom:.4rem;}
@@ -481,15 +473,11 @@
   /* ---------- refined hover ---------- */
   .card{transition:transform .3s cubic-bezier(.16,1,.3,1), box-shadow .3s ease, border-color .3s ease;}
   .card:hover{transform:translateY(-4px);box-shadow:var(--shadow-2);border-color:var(--line-strong);}
-  .menu-tile{transition:transform .25s cubic-bezier(.16,1,.3,1), box-shadow .25s ease, border-color .25s ease;}
-  .menu-tile:hover{transform:translateY(-3px);box-shadow:var(--shadow-2);}
   .fam-tile{transition:transform .25s cubic-bezier(.16,1,.3,1), border-color .25s ease;}
   .fam-tile:hover{transform:translateY(-3px);}
   .icon-btn{transition:background .2s ease, color .2s ease;}
   .tag{transition:border-color .2s ease, color .2s ease;}
   .tag:hover{border-color:var(--accent);color:var(--accent);}
-  .menu-tile-arrow svg{transition:transform .3s cubic-bezier(.16,1,.3,1);}
-  .menu-tile:hover .menu-tile-arrow svg{transform:translateX(5px);}
   .swatch-img{transition:transform .6s cubic-bezier(.16,1,.3,1) !important;}
   .card:hover .swatch-img{transform:scale(1.05);}
 
@@ -534,6 +522,14 @@
   @keyframes introIn{to{opacity:1;transform:translateY(0);}}
   .intro.hide{opacity:0;visibility:hidden;pointer-events:none;}
   @media (prefers-reduced-motion: reduce){ .intro{display:none;} }
+
+  /* disclosure for the home card's layering instructions */
+  .ai-more{margin-top:.1rem;}
+  .ai-more > summary{cursor:pointer;list-style:none;display:inline-flex;align-items:center;gap:.55rem;font-family:var(--font-mono);font-size:.71rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted);padding:.55rem 0;transition:color .2s ease;}
+  .ai-more > summary::-webkit-details-marker{display:none;}
+  .ai-more > summary::after{content:'';width:6px;height:6px;border-right:1px solid currentColor;border-bottom:1px solid currentColor;transform:translateY(-2px) rotate(45deg);transition:transform .25s cubic-bezier(.16,1,.3,1);}
+  .ai-more[open] > summary::after{transform:translateY(1px) rotate(225deg);}
+  .ai-more > summary:hover{color:var(--accent);}
 
   /* ---------- phone refinements ----------
      Deliberately last in the sheet: media queries add no specificity, so these
@@ -915,7 +911,7 @@ function renderHome(){
   const top6 = topEntries(famCounts, 6);
 
   return `
-  <div class="wrap home-head" style="padding-top:2.2rem;">
+  <div class="wrap home-head">
     <div class="section-head reveal-io">
       <h2>Home</h2>
       <p>Today's pick, and every way into the rest of the library.</p>
@@ -1780,7 +1776,7 @@ function reasonLine(res){
   return s;
 }
 
-function renderAnalysis(res){
+function renderAnalysis(res, opts){
   if(!res) return '';
   const verdictMeta = {
     good: {label:'Good pairing', cls:'partner', icon:ICONS.check},
@@ -1788,16 +1784,18 @@ function renderAnalysis(res){
     avoid:{label:'Avoid this pairing', cls:'restrict', icon:ICONS.x},
   }[res.verdict];
 
+  /* On the home card these instructions run to ~800px on a phone and bury the
+     rest of the page, so fold them behind a disclosure there. The calculator,
+     where the detail is the whole point, passes nothing and is unaffected.
+     Rendered open on wider screens so desktop reads exactly as before. */
+  const collapse = !!(opts && opts.collapse);
+  const openAttr = (!collapse || window.matchMedia('(min-width:560px)').matches) ? ' open' : '';
+  const foldGrid = (inner) => collapse
+    ? `<details class="ai-more"${openAttr}><summary>How to wear it</summary>${inner}</details>`
+    : inner;
+
   if(res.verdict === 'avoid'){
-    return `
-    <div class="analysis pop-in">
-      <div class="analysis-verdict ${verdictMeta.cls}">
-        <span class="av-icon">${verdictMeta.icon}</span>
-        <div>
-          <div class="av-label">${esc(verdictMeta.label)}</div>
-          <p class="av-reason">${esc(reasonLine(res))}</p>
-        </div>
-      </div>
+    const gridHtml = `
       <div class="analysis-grid">
         <div class="ai-block">
           <div class="eyebrow">${esc(res.A.name)} wears best for</div>
@@ -1811,7 +1809,17 @@ function renderAnalysis(res){
           <div class="eyebrow">Instead</div>
           <p>Keep these on separate days. ${res.hint ? `If you want to layer either of them, <strong>${esc(res.hint.brand)} ${esc(res.hint.name)}</strong> is a safer match, its profile does not fight either one.` : 'Reach for one at a time until a better match turns up.'}</p>
         </div>
+      </div>`;
+    return `
+    <div class="analysis pop-in">
+      <div class="analysis-verdict ${verdictMeta.cls}">
+        <span class="av-icon">${verdictMeta.icon}</span>
+        <div>
+          <div class="av-label">${esc(verdictMeta.label)}</div>
+          <p class="av-reason">${esc(reasonLine(res))}</p>
+        </div>
       </div>
+      ${foldGrid(gridHtml)}
     </div>`;
   }
 
@@ -1833,6 +1841,7 @@ function renderAnalysis(res){
       <p class="blend-desc">${esc(blendDesc)}</p>
       <button class="btn btn-sm ${alreadySaved ? 'btn-ghost' : 'btn-primary'}" id="saveBlendBtn" ${alreadySaved ? 'disabled' : ''}>${alreadySaved ? 'Saved to Layering Lab' : 'Save this layering'}</button>
     </div>
+    ${foldGrid(`
     <div class="analysis-grid">
       <div class="ai-block">
         <div class="eyebrow">Best worn for</div>
@@ -1846,7 +1855,7 @@ function renderAnalysis(res){
         <div class="eyebrow">Round it out</div>
         <p>Add <strong>${esc(res.hint.brand)} ${esc(res.hint.name)}</strong> to the mix. ${esc(res.hintReason)}</p>
       </div>` : ''}
-    </div>
+    </div>`)}
   </div>`;
 }
 
@@ -2027,7 +2036,7 @@ function todaysLayeringHTML(value){
       <span class="calc-plus">+</span>
       <span>${esc(B.brand)} · ${esc(B.name)}</span>
     </div>
-    ${renderAnalysis(res)}
+    ${renderAnalysis(res, {collapse:true})}
     <a href="#/layering?a=${encodeURIComponent(A.label)}&b=${encodeURIComponent(B.label)}" class="btn btn-ghost" style="margin-top:1.2rem;">Open in the layering calculator ${ICONS.arrow}</a>`;
 }
 
