@@ -1,3 +1,4 @@
+<meta charset="utf-8" />
 <title>Ben's Fragrance Library</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="manifest" href="manifest.json" />
@@ -522,6 +523,12 @@
   @keyframes introIn{to{opacity:1;transform:translateY(0);}}
   .intro.hide{opacity:0;visibility:hidden;pointer-events:none;}
   @media (prefers-reduced-motion: reduce){ .intro{display:none;} }
+
+  .today-actions{display:flex;align-items:center;gap:1.2rem;flex-wrap:wrap;margin-top:1.2rem;}
+  .today-reroll{display:inline-flex;align-items:center;gap:.55rem;font-family:var(--font-mono);font-size:.72rem;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-muted);padding:.45rem 0;border-bottom:1px solid var(--line-strong);transition:color .25s ease, border-color .25s ease;}
+  .today-reroll:hover{color:var(--accent);border-color:var(--accent);}
+  .today-count{font-variant-numeric:tabular-nums;color:var(--ink-faint);}
+  .today-reroll:hover .today-count{color:inherit;}
 
   /* disclosure for the home card's layering instructions */
   .ai-more{margin-top:.1rem;}
@@ -1996,10 +2003,13 @@ function computeTodaysLayering(weather){
   if(!candidates.length) return null;
 
   candidates.sort((x,y)=>y.fitScore-x.fitScore);
-  const top = candidates.slice(0, Math.min(5, candidates.length));
+  /* Keep the whole shortlist, not just the winner, so the card can offer
+     alternatives. They are all non-avoid pairings drawn from the best climate
+     fits for today, so anything further down the list is still a sound
+     suggestion, just a slightly weaker fit. */
+  const top = candidates.slice(0, Math.min(8, candidates.length));
   const seed = hashStr(todayKey() + '|todayslayering');
-  const pick = top[seed % top.length];
-  return { res: pick.res, bucket, ctx, weather, cond };
+  return { list: top.map(c=>c.res), index: seed % top.length, bucket, ctx, weather, cond };
 }
 
 function todaysLayeringSkeleton(){
@@ -2019,7 +2029,8 @@ function todaysLayeringHTML(value){
       <div class="today-meta"><span class="tag">Not enough data</span></div>
       <p class="playbook" style="margin:0;">Add a couple more fragrances to the collection and today's pairing will appear here.</p>`;
   }
-  const { res, bucket, ctx, weather, cond } = value;
+  const { list, index, bucket, ctx, weather, cond } = value;
+  const res = list[index];
   const weatherLabel = weather
     ? Math.round(weather.temp)+'°C · '+weatherCodeInfo(weather.code)[0]
     : 'Based on today’s date (location not shared)';
@@ -2037,16 +2048,77 @@ function todaysLayeringHTML(value){
       <span>${esc(B.brand)} · ${esc(B.name)}</span>
     </div>
     ${renderAnalysis(res, {collapse:true})}
-    <a href="#/layering?a=${encodeURIComponent(A.label)}&b=${encodeURIComponent(B.label)}" class="btn btn-ghost" style="margin-top:1.2rem;">Open in the layering calculator ${ICONS.arrow}</a>`;
+    <div class="today-actions">
+      <a href="#/layering?a=${encodeURIComponent(A.label)}&b=${encodeURIComponent(B.label)}" class="btn btn-ghost">Open in the layering calculator ${ICONS.arrow}</a>
+      ${list.length > 1 ? `<button type="button" class="today-reroll" id="todayReroll">Suggest another <span class="today-count">${index+1}/${list.length}</span></button>` : ''}
+    </div>`;
+}
+
+/* Shared by the home card and the layering calculator. The calculator had this
+   inline, which is why the identical button on the home card did nothing: its
+   only listener was bound to #calcResult, an element that exists on the
+   calculator page alone. */
+async function handleSaveBlend(btn, analysis){
+  if(!btn || btn.disabled || !analysis) return;
+  const blendName = generateBlendName(analysis);
+  const blendDesc = generateBlendDescription(analysis);
+  const originalLabel = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+  try{
+    const entry = await saveLayeringToLab(analysis, blendName, blendDesc);
+    if(entry){
+      btn.classList.remove('btn-primary'); btn.classList.add('btn-ghost');
+      btn.textContent = 'Saved to Layering Lab';
+    } else {
+      btn.textContent = originalLabel;
+      btn.disabled = false;
+    }
+  }catch(err){
+    console.warn('saveLayeringToLab failed', err);
+    btn.textContent = 'Could not save — try again';
+    btn.disabled = false;
+  }
 }
 
 let TODAYS_LAYERING_CACHE = null;
+
+function currentTodaysPairing(){
+  const c = TODAYS_LAYERING_CACHE;
+  if(!c || !c.value || !c.value.list) return null;
+  return c.value.list[c.value.index] || null;
+}
+
+/* The card is injected after the weather call resolves, so it misses bindMain
+   and has to wire its own controls each time it re-renders. */
+function bindTodaysCard(el){
+  const reroll = el.querySelector('#todayReroll');
+  if(reroll){
+    reroll.addEventListener('click', ()=>{
+      const c = TODAYS_LAYERING_CACHE;
+      if(!c || !c.value || !c.value.list || c.value.list.length < 2) return;
+      c.value.index = (c.value.index + 1) % c.value.list.length;
+      el.innerHTML = todaysLayeringHTML(c.value);
+      bindTodaysCard(el);
+      if(window.gsap && !REDUCE_MOTION){
+        const bits = el.querySelectorAll('.today-pair-head, .analysis');
+        gsap.fromTo(bits, {opacity:0, y:10}, {opacity:1, y:0, duration:0.42, ease:'power3.out', stagger:0.06});
+      }
+    });
+  }
+  const save = el.querySelector('#saveBlendBtn');
+  if(save){
+    save.addEventListener('click', ()=>handleSaveBlend(save, currentTodaysPairing()));
+  }
+}
+
 function loadTodaysLayering(){
   const el = document.getElementById('todaysLayering');
   if(!el) return;
   if(TODAYS_LAYERING_CACHE && TODAYS_LAYERING_CACHE.day === todayKey()){
     el.innerHTML = todaysLayeringHTML(TODAYS_LAYERING_CACHE.value);
     el.classList.add('pop-in');
+    bindTodaysCard(el);
     return;
   }
   fetchWeather().then(weather=>{
@@ -2056,6 +2128,7 @@ function loadTodaysLayering(){
     if(!freshEl) return;
     freshEl.innerHTML = todaysLayeringHTML(value);
     freshEl.classList.add('pop-in');
+    bindTodaysCard(freshEl);
   });
 }
 
@@ -2511,31 +2584,11 @@ function bindMain(){
 
     const resultEl = document.getElementById('calcResult');
     if(resultEl){
-      resultEl.addEventListener('click', async (e)=>{
+      resultEl.addEventListener('click', (e)=>{
         const btn = e.target.closest('#saveBlendBtn');
         if(!btn || btn.disabled) return;
         if(!calcA.value || !calcB.value || calcA.value === calcB.value) return;
-        const analysis = analyzePairing(calcA.value, calcB.value);
-        if(!analysis) return;
-        const blendName = generateBlendName(analysis);
-        const blendDesc = generateBlendDescription(analysis);
-        btn.disabled = true;
-        const originalLabel = btn.textContent;
-        btn.textContent = 'Saving…';
-        try{
-          const entry = await saveLayeringToLab(analysis, blendName, blendDesc);
-          if(entry){
-            btn.classList.remove('btn-primary'); btn.classList.add('btn-ghost');
-            btn.textContent = 'Saved to Layering Lab';
-          } else {
-            btn.textContent = originalLabel;
-            btn.disabled = false;
-          }
-        }catch(err){
-          console.warn('saveLayeringToLab failed', err);
-          btn.textContent = 'Could not save — try again';
-          btn.disabled = false;
-        }
+        handleSaveBlend(btn, analyzePairing(calcA.value, calcB.value));
       });
     }
   }
