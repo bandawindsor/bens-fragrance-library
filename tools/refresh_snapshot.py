@@ -36,6 +36,34 @@ MIME_EXT = {
 
 DATA_URL_RE = re.compile(r"data:([^;]+);base64,(.*)$", re.S)
 EMBEDDED_RE = re.compile(r"(const EMBEDDED_DATA = )(\[.*?\])(;\s*\n)", re.S)
+STAMP_RE = re.compile(r"(const EMBEDDED_STAMP = )(-?\d+)(;)")
+
+
+def hash_str(s):
+    """Byte-for-byte port of the page's own hashStr, including its 32-bit
+    wrap-around. Both sides must agree or the page can never match the stamp."""
+    h = 0
+    for ch in s:
+        shifted = ((h << 5) & 0xFFFFFFFF)
+        if shifted >= 0x80000000:
+            shifted -= 0x100000000
+        h = shifted - h + ord(ch)
+        h &= 0xFFFFFFFF
+        if h >= 0x80000000:
+            h -= 0x100000000
+    return abs(h)
+
+
+def fetch_stamp(base_url, key):
+    """Fingerprint of what the server currently holds, cheap enough for the
+    page to re-check on every visit (about 6KB, versus 12MB for a full pull)."""
+    req = urllib.request.Request(
+        f"{base_url}/rest/v1/fragrances?select=id,created_at&order=id.asc",
+        headers={"apikey": key, "Authorization": f"Bearer {key}"},
+    )
+    with urllib.request.urlopen(req, timeout=60) as res:
+        rows = json.load(res)
+    return hash_str("|".join(f"{r['id']}:{r['created_at']}" for r in rows))
 
 
 def read_config(html):
@@ -128,8 +156,12 @@ def refresh(html_path):
     if any(str(r.get("image", "")).startswith("data:") for r in rows):
         sys.exit("  Refusing to write: a base64 image survived into the snapshot.")
 
+    stamp = fetch_stamp(base_url, key)
+    stamp_match = STAMP_RE.search(html)
+    stamp_current = stamp_match and int(stamp_match.group(2)) == stamp
+
     old_json = match.group(2)
-    if old_json == new_json and not written and not updated:
+    if old_json == new_json and stamp_current and not written and not updated:
         print(f"  already current: {len(rows)} fragrances, nothing to do.")
         return False
 
@@ -139,6 +171,10 @@ def refresh(html_path):
         old_count = "?"
 
     html = html[: match.start(2)] + new_json + html[match.end(2):]
+    if stamp_match:
+        html = STAMP_RE.sub(lambda m: m.group(1) + str(stamp) + m.group(3), html, count=1)
+    else:
+        print("  WARNING: no EMBEDDED_STAMP line found, the page will keep doing full syncs.")
     if crlf:
         html = html.replace("\n", "\r\n")
     with open(html_path, "wb") as fh:
@@ -159,6 +195,7 @@ def refresh(html_path):
 
     print(f"  fragrances: {old_count} -> {len(rows)}")
     print(f"  snapshot:   {len(old_json)} -> {len(new_json)} chars")
+    print(f"  stamp:      {stamp}")
     if written:
         print(f"  new photos:     {len(written)} ({', '.join(written[:8])}"
               f"{'...' if len(written) > 8 else ''})")
