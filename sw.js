@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bens-fragrance-archive-v4';
+const CACHE_NAME = 'bens-fragrance-archive-v5';
 const CORE_ASSETS = [
   './',
   './index.html',
